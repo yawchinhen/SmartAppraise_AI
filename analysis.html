@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Run Analysis – Employee Performance Prediction</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+  :root{
+    --bg-1:#0d1a2d;
+    --bg-2:#122139;
+    --card:#192841;
+    --muted:#b4bcd7;
+    --accent:#ffd600;
+    --blue:#4ea1fc;
+  }
+  *{box-sizing:border-box}
+  html, body {
+    margin:0;
+    padding:0;
+    height:100%;
+  }
+  body{
+    font-family:'Roboto',system-ui,Arial;
+    background:linear-gradient(135deg,var(--bg-1) 0%,var(--bg-2) 100%);
+    color:#eef2f8;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* NAVBAR */
+  .navbar{
+    position:fixed; 
+    top:0; left:0; right:0;
+    height:72px; 
+    display:flex; 
+    align-items:center; 
+    justify-content:space-between;
+    padding:14px 36px;
+    background: rgba(23,38,68,0.75);
+    backdrop-filter: blur(6px);
+    border-bottom:1px solid rgba(255,255,255,0.03);
+    z-index:1000;
+  }
+  .brand{ 
+    font-family:'Montserrat'; 
+    font-weight:700; 
+    color:#fff; 
+    font-size:1.15rem; 
+  }
+  .brand .accent{ color:var(--accent) }
+
+  .nav-links{ 
+    display:flex; 
+    gap:18px;
+    align-items:center;
+  }
+  .nav-links a{
+    color:var(--accent); 
+    text-decoration:none; 
+    font-weight:600; 
+    padding:6px 10px; 
+    border-radius:8px;
+    transition:0.25s ease;
+  }
+  /* --- NEW HOVER EFFECTS (MATCHES DASHBOARD STYLE) --- */
+  .nav-links a:hover{
+    background:rgba(255,255,255,0.12);
+    color:#fff;
+    transform: translateY(-2px);
+  }
+
+  /* PAGE STRUCTURE */
+  main.container {
+    max-width:900px; 
+    margin:120px auto 40px; 
+    padding:20px;
+    flex:1;
+  }
+
+  .upload-card { 
+    background:var(--card); 
+    padding:35px; 
+    border-radius:18px; 
+    border:1px solid rgba(255,255,255,0.03); 
+    box-shadow:0 4px 18px rgba(0,0,0,0.35) 
+  }
+  .upload-title { 
+    font-size:1.9em; 
+    font-family:'Montserrat'; 
+    color:var(--accent); 
+    margin-bottom:10px 
+  }
+  .upload-desc { 
+    color:var(--muted); 
+    line-height:1.6; 
+    margin-bottom:18px 
+  }
+
+  .drop-zone { 
+    border:2px dashed var(--blue); 
+    border-radius:14px; 
+    padding:30px; 
+    text-align:center; 
+    cursor:pointer; 
+    color:#b4c7e7; 
+    transition:background .18s 
+  }
+  .drop-zone:hover { background: rgba(255,255,255,0.02) }
+
+  .file-info { 
+    margin-top:12px; 
+    color:var(--muted); 
+    font-size:0.95rem; 
+    display:flex; 
+    justify-content:space-between; 
+    align-items:center; 
+    gap:12px 
+  }
+  .filename { font-weight:600; color:#e6eefc }
+
+  .status { 
+    margin-top:14px; 
+    padding:10px 12px; 
+    border-radius:10px; 
+    background:rgba(255,255,255,0.01); 
+    color:var(--muted) 
+  }
+
+  .controls { 
+    margin-top:16px; 
+    display:flex; 
+    gap:12px; 
+    flex-wrap:wrap 
+  }
+  .action-btn { 
+    background:var(--accent); 
+    color:#122139; 
+    border:none; 
+    padding:14px 26px; 
+    border-radius:10px; 
+    font-weight:700; 
+    cursor:pointer;
+    transition:.25s;
+  }
+  .action-btn:hover:not([disabled]) {
+    background:#ffe44c;
+    transform:scale(1.03);
+  }
+  .action-btn[disabled]{ opacity:0.6; cursor:not-allowed }
+
+  .secondary { 
+    background:transparent; 
+    border:1px solid rgba(255,255,255,0.06); 
+    color:var(--muted); 
+    padding:12px 16px; 
+    border-radius:10px; 
+    cursor:pointer;
+    transition:.25s;
+  }
+  .secondary:hover{
+    background:rgba(255,255,255,0.10);
+    color:#fff;
+  }
+
+  .result-box { 
+    display:none; 
+    background:#182b47; 
+    padding:25px; 
+    border-radius:14px; 
+    margin-top:25px; 
+    box-shadow:0 4px 18px rgba(0,0,0,0.25) 
+  }
+  .result-box h3{ color:var(--accent); font-family:'Montserrat' }
+
+  /* --- FIXED FOOTER (ALWAYS BOTTOM) --- */
+  footer.site-footer{
+    padding:22px 14px; 
+    text-align:center; 
+    color:#9fb0d4;
+    margin-top:auto;
+    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+    backdrop-filter:blur(4px);
+    border-top:1px solid rgba(255,255,255,0.05);
+  }
+</style>
+
+</head>
+<body>
+  <header class="navbar">
+    <div class="brand">SmartAppraise AI by <span class="accent">SY-II</span></div>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="analysis.html">Run Analysis</a>
+      <a href="dashboard.html">View Dashboard</a>      
+      <a href="guide.html">User Guide</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html">Logout</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div class="upload-card">
+      <h2 class="upload-title">Run Employee Performance Prediction</h2>
+      <p class="upload-desc">Upload your employee dataset (CSV). The system will produce predictions. Use the status panel below to see progress and errors.</p>
+
+      <div class="drop-zone" id="dropZone" title="Click to choose a CSV file">
+        <p><strong>Click to upload</strong> your CSV file</p>
+        <p style="font-size:0.9rem;color:var(--muted)">or drag & drop here</p>
+      </div>
+
+      <input type="file" id="fileInput" accept=".csv" style="display:none" />
+
+      <div class="file-info">
+        <div>
+          <span style="color:var(--muted)">Selected file:</span> <span class="filename" id="selectedName">— none —</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button id="runBtn" class="action-btn" disabled>Run Prediction</button>
+          <!-- hidden by default; only becomes visible when backend returns processed CSV (successful run) -->
+          <button id="viewBtn" class="secondary" style="display:none">View Dashboard</button>
+        </div>
+      </div>
+
+      <div class="status" id="status">Status: idle</div>
+
+      <div class="result-box" id="resultBox" aria-live="polite">
+        <h3>Prediction Completed</h3>
+        <p id="resultText">Your CSV was processed. Download or view dashboard.</p>
+        <div style="margin-top:12px; display:flex; gap:10px;">
+          <button id="downloadBtn" class="secondary">Download CSV</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div>
+    © 2025 SY-II • SmartAppraise AI | Built by Yaw Chin Hen, Tam Sze Yin, Yang Ka Weng.<br>
+    Need help? <a href="contact.html" style="color:var(--accent); text-decoration:none">Contact us</a> • 
+    <a href="guide.html" style="color:var(--accent); text-decoration:none">User Guide</a>
+  </div>
+</footer>
+
+<script>
+/* Tiny IndexedDB helper for storing larger CSVs */
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const rq = indexedDB.open('syii-db', 1);
+    rq.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('store')) {
+        db.createObjectStore('store');
+      }
+    };
+    rq.onsuccess = (e) => resolve(e.target.result);
+    rq.onerror = (e) => reject(e.target.error || new Error('IndexedDB open failed'));
+  });
+}
+
+async function idbSet(key, value) {
+  try {
+    const db = await openDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction('store', 'readwrite');
+      const s = tx.objectStore('store');
+      const req = s.put(value, key);
+      req.onsuccess = () => { tx.oncomplete = ()=> { db.close(); resolve(); }; };
+      req.onerror = (ev) => { db.close(); reject(ev.target.error || new Error('idb put failed')); };
+    });
+  } catch (e) {
+    console.error('idbSet failed', e);
+    throw e;
+  }
+}
+
+async function idbGet(key) {
+  try {
+    const db = await openDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction('store', 'readonly');
+      const s = tx.objectStore('store');
+      const req = s.get(key);
+      req.onsuccess = (ev) => { db.close(); resolve(ev.target.result); };
+      req.onerror = (ev) => { db.close(); reject(ev.target.error || new Error('idb get failed')); };
+    });
+  } catch (e) {
+    console.error('idbGet failed', e);
+    throw e;
+  }
+}
+
+/* main frontend logic */
+const apiURL = "http://127.0.0.1:8000/predict";
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const selectedName = document.getElementById('selectedName');
+const runBtn = document.getElementById('runBtn');
+const viewBtn = document.getElementById('viewBtn');
+const status = document.getElementById('status');
+const resultBox = document.getElementById('resultBox');
+const resultText = document.getElementById('resultText');
+const downloadBtn = document.getElementById('downloadBtn');
+
+let selectedFile = null;
+let lastProcessedCSV = null; // string in memory
+let idbAvailable = true;
+
+function setStatus(txt, isError=false){
+  status.textContent = 'Status: ' + txt;
+  status.style.color = isError ? '#ffb3b3' : 'var(--muted)';
+  console.debug('[status]', txt);
+}
+
+// wire UI
+dropZone.addEventListener('click', ()=> fileInput.click());
+dropZone.addEventListener('dragover', (e)=> { e.preventDefault(); dropZone.style.background='rgba(255,255,255,0.02)'; });
+dropZone.addEventListener('dragleave', ()=> { dropZone.style.background=''; });
+dropZone.addEventListener('drop', (e)=> {
+  e.preventDefault();
+  dropZone.style.background='';
+  if (e.dataTransfer.files && e.dataTransfer.files.length) {
+    fileInput.files = e.dataTransfer.files;
+    handleFileSelection();
+  }
+});
+fileInput.addEventListener('change', handleFileSelection);
+
+function handleFileSelection(){
+  if (!fileInput.files || !fileInput.files[0]) {
+    selectedFile = null;
+    selectedName.textContent = '— none —';
+    runBtn.disabled = true;
+    return;
+  }
+  selectedFile = fileInput.files[0];
+  selectedName.textContent = selectedFile.name;
+  runBtn.disabled = false;
+  setStatus('File selected: ' + selectedFile.name);
+  console.debug('File selected object:', selectedFile);
+}
+
+function readFileText(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = ()=> resolve(r.result);
+    r.onerror = ()=> reject(r.error);
+    r.readAsText(file);
+  });
+}
+
+// safe storage to IDB with fallback to localStorage
+async function storeLastCSV(text){
+  if (!text) return;
+  // Try IDB first; always try to keep a localStorage fallback copy for the dashboard
+  try {
+    await idbSet('lastCSV', text);
+    console.debug('Stored lastCSV in IndexedDB');
+    try { localStorage.setItem('lastCSV', text); } catch(_) { /* avoid quota errors on this optional write */ }
+  } catch(e){
+    console.warn('Failed to store in IndexedDB; saving to localStorage as fallback.', e);
+    idbAvailable = false;
+    try {
+      localStorage.setItem('lastCSV', text);
+      console.debug('Stored lastCSV in localStorage fallback');
+    } catch(errLocal) {
+      console.error('localStorage write failed (fallback):', errLocal);
+      // if localStorage fails, we keep it in memory only (no further action)
+    }
+  }
+}
+
+async function storeLastProcessedCSV(text){
+  if (!text) return;
+  // Try IDB first; always attempt localStorage fallback as well
+  try {
+    await idbSet('lastProcessedCSV', text);
+    lastProcessedCSV = text;
+    console.debug('Stored lastProcessedCSV in IndexedDB');
+    try { localStorage.setItem('lastProcessedCSV', text); } catch(_) { /* ignore if too big */ }
+  } catch(e){
+    console.warn('Failed to store processed CSV in IndexedDB — falling back to localStorage/memory', e);
+    idbAvailable = false;
+    lastProcessedCSV = text;
+    try {
+      localStorage.setItem('lastProcessedCSV', text);
+      console.debug('Stored lastProcessedCSV in localStorage fallback');
+    } catch(errLocal){
+      console.error('localStorage write failed (processed fallback):', errLocal);
+      // keep lastProcessedCSV in memory only
+    }
+  }
+}
+
+async function getLastCSVFromStorage(){
+  try {
+    // Prefer IDB reads
+    try {
+      const valIdb = await idbGet('lastProcessedCSV') || await idbGet('lastCSV');
+      if (valIdb) {
+        lastProcessedCSV = valIdb;
+        return valIdb;
+      }
+    } catch(idbErr) {
+      console.warn('IndexedDB read failed, will try localStorage', idbErr);
+      idbAvailable = false;
+    }
+
+    // fallback to localStorage
+    const valLS = localStorage.getItem('lastProcessedCSV') || localStorage.getItem('lastCSV');
+    if (valLS) { lastProcessedCSV = valLS; return valLS; }
+  } catch(e){
+    console.warn('Both IDB/localStorage reads failed:', e);
+    idbAvailable = false;
+  }
+  return null;
+}
+
+async function runPrediction(){
+  // minimal checks
+  if (!selectedFile) {
+    // try fallback to stored CSV if present
+    const stored = await getLastCSVFromStorage();
+    if (stored) {
+      setStatus('No file selected — using last stored CSV. Run a fresh prediction to enable dashboard view.');
+      resultBox.style.display = 'block';
+      resultText.textContent = 'Using stored CSV (from previous upload).';
+      return;
+    }
+    return alert('Please select a CSV file first.');
+  }
+
+  setStatus('Reading file locally...');
+  let rawText;
+  try {
+    rawText = await readFileText(selectedFile);
+    console.debug('Read file length:', rawText.length);
+  } catch (err) {
+    console.error('Error reading file:', err);
+    setStatus('Failed to read file: ' + (err.message || err), true);
+    return;
+  }
+
+  // Attempt to store raw text into IndexedDB (large friendly storage) with localStorage fallback
+  try {
+    await storeLastCSV(rawText);
+  } catch(e){
+    console.warn('storeLastCSV threw', e);
+    // If IDB not available, still keep raw in memory for session
+  }
+
+  // ***** CHANGE: store the raw upload immediately as "lastProcessedCSV" too
+  // so dashboard will use the latest uploaded file even if backend hasn't responded yet.
+  // This prevents dashboard from falling back to an older processed CSV.
+  try {
+    await storeLastProcessedCSV(rawText);
+    console.debug('Saved raw upload into lastProcessedCSV prior to backend call (so dashboard shows it immediately).');
+  } catch(e) {
+    console.warn('storeLastProcessedCSV (pre-send) failed', e);
+  }
+
+  // prepare form data
+  const fd = new FormData();
+  fd.append('file', selectedFile);
+
+  runBtn.disabled = true;
+  setStatus('Sending to backend...');
+  try {
+    const resp = await fetch(apiURL, { method: 'POST', body: fd, mode: 'cors' });
+    console.debug('Fetch status', resp.status);
+    if (!resp.ok) {
+      const txt = await resp.text().catch(()=>'<no response>');
+      setStatus(`Backend error ${resp.status}: ${txt}`, true);
+      console.error('Backend non-ok:', resp.status, txt);
+      // store local raw as processed fallback so dashboard can use it (already done above),
+      // keep showing result box with message
+      resultBox.style.display = 'block';
+      resultText.textContent = 'Backend returned error but local CSV saved for dashboard.';
+      runBtn.disabled = false;
+      return;
+    }
+
+    let data;
+    try {
+      data = await resp.json();
+    } catch (je) {
+      const txt = await resp.text().catch(()=>'<no response>');
+      setStatus('Invalid JSON from backend: check console', true);
+      console.error('Invalid JSON. Response text:', txt);
+      // already stored raw as processed fallback
+      resultBox.style.display = 'block';
+      resultText.textContent = 'Backend returned invalid JSON — local CSV saved.';
+      runBtn.disabled = false;
+      return;
+    }
+
+    if (data && data.csv) {
+      // overwrite lastProcessedCSV with backend output (preferred)
+      await storeLastProcessedCSV(data.csv);
+      setStatus('Backend processed CSV successfully.');
+      resultBox.style.display = 'block';
+      resultText.textContent = 'Server processed CSV stored. You can now view the dashboard.';
+      // === SHOW the View Dashboard button ONLY on successful backend processing ===
+      viewBtn.style.display = 'inline-block';
+      viewBtn.disabled = false;
+    } else {
+      // no csv field returned — keep raw (already stored)
+      setStatus('Backend returned no CSV — used raw upload.');
+      resultBox.style.display = 'block';
+      resultText.textContent = 'No processed CSV returned. Raw CSV saved for dashboard.';
+      console.warn('Backend JSON but missing csv field:', data);
+      // do NOT show View Dashboard (since backend didn't return processed CSV)
+    }
+
+  } catch (fetchErr) {
+    console.error('Fetch/network error:', fetchErr);
+    setStatus('Failed to connect to backend: ' + (fetchErr.message || fetchErr), true);
+    // fallback: keep raw CSV saved for dashboard (already done)
+    resultBox.style.display = 'block';
+    resultText.textContent = 'Backend unreachable — local CSV saved for dashboard.';
+    // do NOT show View Dashboard
+  } finally {
+    runBtn.disabled = false;
+  }
+}
+
+// Download current stored CSV (prefer processed)
+downloadBtn.addEventListener('click', async ()=>{
+  let csv = lastProcessedCSV;
+  if (!csv && idbAvailable) {
+    try { csv = await idbGet('lastProcessedCSV') || await idbGet('lastCSV'); } catch(e){ console.warn('idbGet in download failed', e); }
+  }
+  if (!csv) {
+    // final fallback to localStorage
+    csv = localStorage.getItem('lastProcessedCSV') || localStorage.getItem('lastCSV');
+  }
+  if (!csv) return alert('No CSV to download.');
+  const b = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'predictions.csv';
+  a.click();
+});
+
+// View dashboard: ensure lastProcessedCSV exists (store in IDB & localStorage if needed)
+viewBtn.addEventListener('click', async ()=>{
+  // try ensure lastProcessedCSV is available
+  if (!lastProcessedCSV && idbAvailable) {
+    try { lastProcessedCSV = await idbGet('lastProcessedCSV') || await idbGet('lastCSV'); } catch(e){ console.warn('idbGet in view failed', e); idbAvailable = false; }
+  }
+  if (!lastProcessedCSV && selectedFile) {
+    // try read file and store
+    try { lastProcessedCSV = await readFileText(selectedFile); await storeLastProcessedCSV(lastProcessedCSV); } catch(e){}
+  }
+  if (!lastProcessedCSV) {
+    alert('No CSV available. Please upload and run prediction first.');
+    return;
+  }
+  // ensure IDB has the processed CSV under 'lastProcessedCSV' key (and localStorage copy)
+  try { await idbSet('lastProcessedCSV', lastProcessedCSV); } catch(e){ /* ignore */ }
+  try { localStorage.setItem('lastProcessedCSV', lastProcessedCSV); } catch(_) {}
+  window.location.href = 'dashboard.html';
+});
+
+// wire run button
+runBtn.addEventListener('click', runPrediction);
+
+// On load try to read stored CSV (non-blocking)
+window.addEventListener('load', async ()=>{
+  try {
+    const available = await getLastCSVFromStorage();
+    if (available) {
+      selectedName.textContent = '(using stored CSV)';
+      lastProcessedCSV = available;
+      setStatus('Found stored CSV in browser. You may run prediction to update it.');
+      runBtn.disabled = false; // allow rerun if user wants to reprocess
+      // IMPORTANT: do NOT show View Dashboard here — only show after a backend success
+      viewBtn.style.display = 'none';
+      viewBtn.disabled = true;
+    } else {
+      setStatus('idle');
+      viewBtn.style.display = 'none';
+      viewBtn.disabled = true;
+    }
+  } catch(e){
+    console.warn('Could not read from IndexedDB on load', e);
+    setStatus('idle');
+    viewBtn.style.display = 'none';
+    viewBtn.disabled = true;
+  }
+});
+</script>
+</body>
+</html>

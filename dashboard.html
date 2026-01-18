@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dashboard — Employee Performance Prediction — SY-II</title>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<!-- Chart.js and PapaParse for client-side CSV parsing + charts -->
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+:root{
+  --bg-1:#0d1a2d;
+  --bg-2:#122139;
+  --card:#192841;
+  --muted:#b4bcd7;
+  --accent:#ffd600;
+  --glass: rgba(255,255,255,0.02);
+  --panel-padding:16px;
+  --panel-head-bg: rgba(23,38,68,0.95);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:'Roboto',system-ui,Arial;
+  background:linear-gradient(135deg,var(--bg-1) 0%,var(--bg-2) 100%);
+  color:#eef2f8;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+
+  /* NEW for footer bottom placement */
+  display:flex;
+  flex-direction:column;
+}
+
+/* NAVBAR */
+.navbar{
+  position:fixed;
+  top:0;left:0;right:0;
+  height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 36px;
+  background: rgba(23,38,68,0.75);
+  backdrop-filter: blur(6px);
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  z-index:1000;
+}
+.brand{
+  font-family:'Montserrat';
+  font-weight:700;
+  color:#fff;
+  font-size:1.15rem;
+  letter-spacing:0.6px;
+}
+.brand .accent{ color:var(--accent) }
+.nav-links{ display:flex; align-items:center; gap:18px; }
+.nav-links a{
+  color:var(--accent);
+  text-decoration:none;
+  font-weight:600;
+  padding:6px 10px;
+  border-radius:8px;
+  transition: all .18s ease;
+}
+.nav-links a:hover{ background:rgba(255,214,0,0.08); color:#fff; transform:translateY(-2px) }
+
+#downloadTop {
+  position: fixed;
+  top:86px;
+  right:28px;
+  z-index:1100;
+  background:var(--accent);
+  color:#0d1a2d;
+  border:none;
+  padding:10px 18px;
+  border-radius:12px;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 6px 20px rgba(0,0,0,0.4);
+}
+
+/* layout */
+.container {
+  width: 100%;
+  max-width: 1400px; /* more room */
+  margin: 120px auto 40px;
+  padding: 12px 20px;
+
+  display: grid;
+  gap: 22px;
+  align-items: start;
+
+  /* NEW: responsive column widths */
+  grid-template-columns: minmax(240px, 270px) 1fr minmax(240px, 270px);
+
+  justify-content: center;
+}
+
+/* panels */
+.panel{
+  background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+  padding:var(--panel-padding);
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.02);
+  box-shadow:0 8px 24px rgba(0,0,0,0.45);
+  position:relative;
+}
+
+aside.panel{ padding:12px; }
+
+#clearFilter { padding: 14px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.04); background: transparent; color: var(--muted); font-weight: 700; font-size: 1rem; width: 100%; cursor: pointer; }
+.filter-spacer { height: 38px; }
+
+.kpi-row { display:flex; gap:14px; margin-bottom:14px; align-items:stretch; }
+.kpi { flex:1; min-width:120px; padding:14px; border-radius:10px; background:var(--glass); display:flex; justify-content:space-between; align-items:center; }
+.kpi .label{ color:var(--muted); font-size:0.95rem }
+.kpi .value{ font-family:'Montserrat'; font-size:1.4rem; color:var(--accent) }
+
+.charts-area{ display:flex; flex-direction:column; gap:14px; }
+.row-full { display:block; }
+.row-two { display:grid; grid-template-columns: 1fr 1fr; gap:12px; align-items:start; }
+.row-three { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; align-items:start; }
+
+.chart-panel { padding:var(--panel-padding); border-radius:10px; background:rgba(255,255,255,0.01); min-height:200px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.01); }
+.performance-donut { display:flex; align-items:center; justify-content:center; padding:6px; height:360px; position:relative; }
+.performance-donut .donut-wrap { display:flex; align-items:center; justify-content:center; gap:36px; width:100%; }
+.performance-donut canvas { max-width:320px !important; max-height:320px !important; width:100% !important; height:auto !important; display:block; margin:0; }
+.performance-donut .panel-title { position:absolute; top:12px; left:18px; font-weight:700; color:var(--muted); }
+#distLegend { width:220px; max-height:300px; overflow:auto; padding-left:6px; display:flex; flex-direction:column; }
+#distLegend .legend-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 4px; }
+#distLegend .legend-left { display:flex; align-items:center; gap:8px; color:#fff; font-weight:600; }
+
+.chart-panel canvas#attendanceDonut { max-width:220px !important; max-height:220px !important; width:100% !important; height:auto !important; display:block; margin:0 auto; }
+.chart-panel canvas#genderPie { max-width:240px !important; max-height:240px !important; width:100% !important; height:auto !important; display:block; margin:0 auto; }
+
+.sidebar{ display:flex; flex-direction:column; gap:12px; align-items:stretch; }
+.small-panel { padding:14px; border-radius:10px; background:rgba(255,255,255,0.01); min-height:140px; }
+
+.table-scroll { overflow: auto; width: 100%; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.table-compact .table-scroll { max-height: 200px; }
+.table-wrap .table-scroll { max-height: 420px; }
+
+.table-scroll table, .table-wrap .table-scroll table { width: 100%; min-width: 0; border-collapse: collapse; table-layout: auto; color: #dbe6fb; }
+
+th { position: sticky; top: 0; z-index: 30; background: var(--panel-head-bg); color: var(--muted); font-weight: 600; padding: 8px 10px; text-align: left; }
+td, th { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.02); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+.table-row-clickable { cursor:pointer; }
+.table-row-clickable:hover td { background:rgba(255,255,255,0.01); }
+
+.top-title { font-size:0.95rem; color:var(--muted); margin-bottom:8px; }
+.top-sub { font-size:0.8rem; color:var(--muted); margin-top:4px; }
+
+.att-band { display:flex; align-items:center; gap:10px; color:var(--muted); margin-bottom:6px; }
+.att-band .sw { width:12px; height:12px; border-radius:3px; display:inline-block; }
+
+#incomePanel .income-value { font-size:1.6rem; font-weight:800; color:var(--accent); }
+#incomePanel .income-label { color:var(--muted); font-size:0.95rem; }
+
+/* new position style inside employee panel */
+#incomePanel .position-value { font-size:1.05rem; font-weight:700; color:#fff; margin-top:6px; }
+#incomePanel .position-label { color:var(--muted); font-size:0.85rem; margin-top:4px; }
+
+/* style for the "no data" row in tables so layout remains */
+.no-data-row td { color: var(--muted); text-align:center; padding:18px 6px; font-weight:600; background: transparent; }
+
+/* ensure table height remains similar when empty by keeping minimum height for panel table-scroll */
+.table-compact .table-scroll, .chart-panel .table-scroll { min-height: 120px; }
+
+@media (max-width:1100px){
+  .container{ grid-template-columns: 1fr; margin-top:140px; padding:12px 16px; max-width:100%; }
+  .row-two, .row-three { grid-template-columns: 1fr; }
+  .performance-donut { height:320px }
+  .performance-donut canvas { max-width:300px !important; }
+  .chart-panel canvas#attendanceDonut, .chart-panel canvas#genderPie { max-width:260px !important; }
+}
+
+/* --- FIXED FOOTER (ALWAYS BOTTOM) --- */
+  footer.site-footer{
+    padding:22px 14px;
+    text-align:center;
+    color:#9fb0d4;
+    margin-top:auto;
+    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+    backdrop-filter:blur(4px);
+    border-top:1px solid rgba(255,255,255,0.05);
+  }
+
+</style>
+</head>
+<body>
+
+<header class="navbar" role="banner">
+  <div class="brand">SmartAppraise AI by <span class="accent">SY-II</span></div>
+  <nav class="nav-links" role="navigation" aria-label="Main navigation">
+    <a href="index.html">Home</a>
+    <a href="analysis.html">Run Analysis</a>
+    <a href="dashboard.html">View Dashboard</a>        
+    <a href="guide.html">User Guide</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="login.html">Logout</a>
+  </nav>
+</header>
+
+<button id="downloadTop">Download Filtered CSV</button>
+
+<main class="container" role="main">
+
+  <!-- LEFT: Filters -->
+  <aside class="panel" aria-label="Filters">
+    <div style="font-weight:700; color:var(--muted); margin-bottom:8px;">FILTERS</div>
+
+    <div style="margin-bottom:10px;">
+      <div style="color:var(--muted); margin-bottom:6px;">Predictive Outcome</div>
+      <select id="perfFilter" style="width:100%; padding:10px; border-radius:8px; background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted);">
+        <option value="">All Performance</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <div style="color:var(--muted); margin-bottom:6px;">Department</div>
+      <select id="departmentFilter" style="width:100%; padding:10px; border-radius:8px; background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted);">
+        <option value="">All Departments</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <div style="color:var(--muted); margin-bottom:6px;">Position</div>
+      <select id="positionFilter" style="width:100%; padding:10px; border-radius:8px; background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted);">
+        <option value="">All Positions</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <div style="color:var(--muted); margin-bottom:6px;">Gender</div>
+      <select id="genderFilter" style="width:100%; padding:10px; border-radius:8px; background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted);">
+        <option value="">All</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <div style="color:var(--muted); margin-bottom:6px;">Attendance</div>
+      <select id="attendanceQuick" style="width:100%; padding:10px; border-radius:8px; background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted);">
+        <option value="">Any</option>
+        <option value=">=98%">>=98%</option>
+        <option value="95-98%">95-98%</option>
+        <option value="90-95%">90-95%</option>
+        <option value="<90%"><90%</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <div style="color:var(--muted); margin-bottom:6px;">Employee ID (filter)</div>
+      <input id="employeeFilter" placeholder="Enter Employee ID" style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:var(--muted);" />
+    </div>
+
+    <div class="filter-spacer" aria-hidden="true"></div>
+
+    <div style="display:flex; gap:10px; flex-direction:column;">
+      <button id="clearFilter">Clear Filters</button>
+    </div>
+
+    <hr style="border:none; height:12px;">
+
+    <div style="margin-top:18px; color:var(--muted); font-size:0.9rem;">
+      <div id="leftSummary">No data loaded</div>
+    </div>
+  </aside>
+
+  <!-- CENTER: KPIs + charts -->
+  <section>
+    <!-- KPI row -->
+    <div class="kpi-row" style="margin-bottom:14px;">
+      <div class="kpi"><div class="label">Total Employees</div><div class="value" id="k_total">—</div></div>
+      <div class="kpi"><div class="label">Avg. Satisfaction</div><div class="value" id="k_sat">—</div></div>
+      <div class="kpi"><div class="label">Avg. Salary / hr</div><div class="value" id="k_salary">—</div></div>
+      <!-- changed label here to "High (%)" -->
+      <div class="kpi"><div class="label">High (%)</div><div class="value" id="k_out">—</div></div>
+    </div>
+
+    <div class="charts-area">
+
+      <!-- ROW 1: Performance Distribution (chart left, legend right) -->
+      <div class="row-full">
+        <div class="chart-panel performance-donut panel" style="width:100%;">
+          <div class="panel-title">Performance Distribution</div>
+
+          <div class="donut-wrap">
+            <canvas id="distDonut"></canvas>
+            <div id="distLegend" role="list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 2: Attendance Rate + Gender -->
+      <div class="row-two tight">
+        <div class="chart-panel panel" style="min-height:220px;">
+          <div style="font-weight:700; color:var(--muted); margin-bottom:8px;">Attendance Rate</div>
+          <canvas id="attendanceDonut" width="220" height="220" style="max-width:100%"></canvas>
+          <div style="margin-top:8px;" id="attendanceBands"></div>
+        </div>
+
+        <div class="chart-panel panel" style="min-height:220px;">
+          <div style="font-weight:700; color:var(--muted); margin-bottom:8px;">Gender</div>
+          <canvas id="genderPie" height="220" style="max-width:100%"></canvas>
+          <div id="genderLegend" style="margin-top:8px"></div>
+        </div>
+      </div>
+
+      <!-- ROW 3: Top Departments + Training Hours -->
+      <div class="row-two">
+        <div class="chart-panel panel" style="min-height:200px;">
+          <div style="font-weight:700; color:var(--muted); margin-bottom:8px;">Top Departments — Avg. Projects</div>
+          <canvas id="deptBar" height="160"></canvas>
+        </div>
+
+        <div class="chart-panel panel" style="min-height:200px;">
+          <div style="font-weight:700; color:var(--muted); margin-bottom:8px;">Training Hours Distribution</div>
+          <canvas id="trainingHist" height="160"></canvas>
+        </div>
+      </div>
+
+      <!-- Top-10 tables (each its own panel) -->
+      <div class="row-three">
+        <div id="panelTopProjects" class="chart-panel panel" style="min-height:240px;">
+          <div class="top-title"><strong style="color:#fff">Top 10 — Projects Handle</strong></div>
+          <div class="table-compact">
+            <div class="table-scroll">
+              <table id="topProjectsTable" aria-label="Top projects table">
+                <thead>
+                  <tr><th>Employee</th><th>Department</th><th style="text-align:right">Projects</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="panelTopWork" class="chart-panel panel" style="min-height:240px;">
+          <div class="top-title"><strong style="color:#fff">Top 10 — Work Hours</strong></div>
+          <div class="table-compact">
+            <div class="table-scroll">
+              <table id="topWorkTable" aria-label="Top work hours table">
+                <thead>
+                  <tr><th>Employee</th><th>Department</th><th style="text-align:right">Work Hours</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="panelTopOvertime" class="chart-panel panel" style="min-height:240px;">
+          <div class="top-title"><strong style="color:#fff">Top 10 — Work Overtime</strong></div>
+          <div class="table-compact">
+            <div class="table-scroll">
+              <table id="topOvertimeTable" aria-label="Top overtime table">
+                <thead>
+                  <tr><th>Employee</th><th>Department</th><th style="text-align:right">Overtime</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    
+          <!-- *** NEW: Bottom-10 tables (each its own panel) - placed below Top-10 *** -->
+      <div class="row-three" style="margin-top:6px;">
+        <div id="panelBottomProjects" class="chart-panel panel" style="min-height:240px;">
+          <div class="top-title"><strong style="color:#fff">Bottom 10 — Projects Handle</strong></div>
+          <div class="table-compact">
+            <div class="table-scroll">
+              <table id="bottomProjectsTable" aria-label="Bottom projects table">
+                <thead>
+                  <tr><th>Employee</th><th>Department</th><th style="text-align:right">Projects</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="panelBottomWork" class="chart-panel panel" style="min-height:240px;">
+          <div class="top-title"><strong style="color:#fff">Bottom 10 — Work Hours</strong></div>
+          <div class="table-compact">
+            <div class="table-scroll">
+              <table id="bottomWorkTable" aria-label="Bottom work hours table">
+                <thead>
+                  <tr><th>Employee</th><th>Department</th><th style="text-align:right">Work Hours</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="panelBottomOvertime" class="chart-panel panel" style="min-height:240px;">
+          <div class="top-title"><strong style="color:#fff">Bottom 10 — Work Overtime</strong></div>
+          <div class="table-compact">
+            <div class="table-scroll">
+              <table id="bottomOvertimeTable" aria-label="Bottom overtime table">
+                <thead>
+                  <tr><th>Employee</th><th>Department</th><th style="text-align:right">Overtime</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- *** END Bottom-10 tables *** -->
+
+      <!-- Employee Records (first 200) - large table -->
+      <div class="chart-panel panel" style="min-height:320px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div style="font-weight:700; color:var(--muted)">Employee Records (first 200)</div>
+          <div style="color:var(--muted)" id="tableCount">0 rows</div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table id="dataTable">
+              <thead>
+                <tr id="tableHead"><th>Employee</th><th>Department</th><th>Performance Prediction</th><th>Satisfaction</th><th>Salary/hr</th><th>Attendance</th></tr>
+              </thead>
+            <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT: Quick insights -->
+  <aside class="sidebar">
+    <div class="panel" style="min-height:240px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="font-weight:700; color:var(--muted)">Quick Insights</div>
+        <div style="color:var(--muted); font-size:0.9rem" id="insightCount">0 records</div>
+      </div>
+      <div id="quickCards" style="display:flex; flex-direction:column; gap:14px; color:var(--muted);">
+        <div style="padding:16px; border-radius:10px; background:rgba(0,0,0,0.03);">
+          <div style="font-weight:700; color:#fff; font-size:1.2rem;" id="insLowOver">—</div>
+          <div style="font-size:0.95rem; color:var(--muted);">Low Perf. & High Overtime</div>
+        </div>
+        <div style="padding:16px; border-radius:10px; background:rgba(0,0,0,0.03);">
+          <div style="font-weight:700; color:#fff; font-size:1.2rem;" id="insAvgAttendance">—</div>
+          <div style="font-size:0.95rem; color:var(--muted);">Avg. Attendance Rate</div>
+        </div>
+        <div style="padding:16px; border-radius:10px; background:rgba(0,0,0,0.03);">
+          <div style="font-weight:700; color:#fff; font-size:1.2rem;" id="insAvgTraining">—</div>
+          <div style="font-size:0.95rem; color:var(--muted);">Avg. Training Hours</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EMPLOYEE PANEL: Monthly Income + Position — hidden unless an employee is selected -->
+    <div id="incomePanel" class="panel" style="display:none; min-height:140px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+        <div style="font-weight:700; color:var(--muted)">Employee Details</div>
+        <div style="color:var(--muted); font-size:0.9rem" id="incomeEmployeeId">—</div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:12px; flex-direction:column; align-items:flex-start;">
+        <div>
+          <div class="income-value" id="incomeValue">—</div>
+          <div class="income-label" id="incomeLabel">Monthly Salary</div>
+        </div>
+
+        <!-- new: position display -->
+        <div style="margin-top:8px;">
+          <div class="position-value" id="incomePosition">—</div>
+          <div class="position-label" id="incomePositionLabel">Position</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div>
+    © 2025 SY-II • SmartAppraise AI | Built by Yaw Chin Hen, Tam Sze Yin, Yang Ka Weng.<br>
+    Need help? <a href="contact.html" style="color:var(--accent); text-decoration:none">Contact us</a> •
+    <a href="guide.html" style="color:var(--accent); text-decoration:none">User Guide</a>
+  </div>
+</footer>
+
+<script>
+  /* =========================
+     Dashboard logic (complete)
+     - robust parsing (PapaParse)
+     - remove ghost rows (filter all-empty rows)
+     - MAX_ROWS cap
+     - auto refresh when localStorage/IDB updated (storage event)
+     - supports IndexedDB keys 'lastProcessedCSV' or 'lastCSV', and localStorage fallback
+     ========================= */
+  
+  const MAX_ROWS = 5000; // safety cap
+  const PERF_ORDER = ['High','Above Average','Average','Below Average','Low','Unknown'];
+  
+  let donutChart, deptChart, trainingChart, genderChart, attendanceChart;
+  let rawRows = []; // prepared rows
+  let columns = [];
+  let currentFilter = { department:'', performance:'', attendance:'', gender:'', employee:'', position:'' };
+  
+  /* ---------- IndexedDB helpers (read-only used) ---------- */
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      if (!window.indexedDB) return reject(new Error('IndexedDB not supported'));
+      const rq = indexedDB.open('syii-db', 1);
+      rq.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('store')) db.createObjectStore('store');
+      };
+      rq.onsuccess = e => resolve(e.target.result);
+      rq.onerror = e => reject(e.target.error || new Error('IndexedDB open failed'));
+    });
+  }
+  async function idbGet(key) {
+    try {
+      const db = await openDB();
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction('store', 'readonly');
+        const s = tx.objectStore('store');
+        const req = s.get(key);
+        req.onsuccess = (ev) => { db.close(); resolve(ev.target.result); };
+        req.onerror = (ev) => { db.close(); reject(ev.target.error || new Error('idb get failed')); };
+      });
+    } catch (e) {
+      console.warn('idbGet failed', e);
+      throw e;
+    }
+  }
+  
+  /* try reading CSV from IDB then localStorage */
+  async function getStoredCSV() {
+    try {
+      if (window.indexedDB) {
+        try {
+          const v1 = await idbGet('lastProcessedCSV').catch(()=>null);
+          if (v1) return String(v1);
+          const v2 = await idbGet('lastCSV').catch(()=>null);
+          if (v2) return String(v2);
+        } catch(e){
+          console.warn('IndexedDB read failed', e);
+        }
+      }
+    } catch(e){ console.warn(e); }
+  
+    try {
+      const ls = localStorage.getItem('lastProcessedCSV') || localStorage.getItem('lastCSV');
+      if (ls) return String(ls);
+    } catch(e){ console.warn('localStorage read failed', e); }
+    return null;
+  }
+  
+  /* helper to parse CSV string via PapaParse and return array of row objects */
+  function parseCSVToObjects(csvText) {
+    return new Promise((resolve, reject) => {
+      Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: false, // we will filter empty rows more strictly below
+        dynamicTyping: false,
+        transform: (v) => (v === undefined || v === null) ? '' : String(v).trim(),
+        complete: (res) => resolve(res.data),
+        error: (err) => reject(err)
+      });
+    });
+  }
+  
+  /* Remove empty/ghost rows:
+     - drop any row where every cell is empty or whitespace
+     - drop rows that are obviously malformed (all values identical to header or only one column with empty)
+     - dedupe exact duplicates (stable)
+  */
+  function sanitizeParsedRows(arr) {
+    if (!Array.isArray(arr)) return [];
+  
+    // remove rows where all values empty
+    let filtered = arr.filter(row => {
+      const values = Object.values(row || {});
+      if (!values.length) return false;
+      // if any cell has non-empty content -> keep
+      return values.some(v => (v !== null && v !== undefined && String(v).trim() !== ''));
+    });
+  
+    // remove rows that look like header repeated inside (e.g. if parser mis-split)
+    // (heuristic) if a row's values exactly match the keys (case-insensitive) -> drop
+    if (filtered.length && typeof filtered[0] === 'object') {
+      const headerKeys = Object.keys(filtered[0]).map(k => (k||'').toLowerCase().trim());
+      filtered = filtered.filter(r => {
+        const vals = Object.values(r).map(v => (v||'').toString().toLowerCase().trim());
+        const isHeaderLike = vals.length === headerKeys.length && vals.every((v,i)=> v === headerKeys[i]);
+        return !isHeaderLike;
+      });
+    }
+  
+    // final cap
+    if (filtered.length > MAX_ROWS) {
+      console.warn(`Parsed CSV has ${filtered.length} rows — trimming to ${MAX_ROWS}.`);
+      document.getElementById('leftSummary').textContent = `Loaded first ${MAX_ROWS} rows (original ${filtered.length})`;
+      filtered = filtered.slice(0, MAX_ROWS);
+    }
+  
+    // dedupe (keep first)
+    const seen = new Set();
+    const deduped = [];
+    filtered.forEach(r => {
+      const key = JSON.stringify(r);
+      if (!seen.has(key)) { seen.add(key); deduped.push(r); }
+    });
+  
+    return deduped;
+  }
+  
+  /* Detect column names (robust to casing) */
+  function detect(colNames) {
+    const c = colNames.map(x => (x||'').toLowerCase().trim());
+    const pick = names => {
+      for (let n of names) {
+        const i = c.indexOf(n.toLowerCase());
+        if (i >= 0) return colNames[i];
+      }
+      return null;
+    };
+    return {
+      id: pick(['employee_id','id','employeeid','emp_id','employee']),
+      dept: pick(['department','dept']),
+      predicted: pick(['predicted_performance','predictedperformance','predicted','prediction','performance_prediction','predicted_performance_level','performance_level','Predicted_Performance']),
+      sat: pick(['employee_satisfaction_score','satisfaction','satisfaction_score','employee_satisfaction','Employee_Satisfaction_Score']),
+      monthly_salary: pick(['monthly_salary','salary','monthlysalary','Monthly_Salary']),
+      work_hours: pick(['work_hours_per_week','work_hours','work_hours_week','work_hours_per_month','Work_Hours_Per_Week']),
+      training_hours: pick(['training_hours','traininghours','training','Training_Hours']),
+      sick_days: pick(['sick_days','sickdays','sick_days_per_year','Sick_Days']),
+      overtime: pick(['overtime_hours','overtimehours','overtime','Overtime_Hours']),
+      gender: pick(['gender','sex','Gender']),
+      projects: pick(['projects_handled','projectshandled','projects','num_projects','projects_count','Projects']),
+      position: pick(['position','role','job_title','jobtitle','designation','job title','Position']),
+      anyNumeric: colNames.find(col=>/salary|hours|sick|satisfaction|overtime|projects/i.test(col))
+    };
+  }
+  
+  /* Format ID consistently */
+  function formatIdValue(v, idx) {
+    if (v === undefined || v === null || v === '') return 'emp_' + (idx+1);
+    const s = String(v).trim();
+    const n = Number(s.replace(/,/g,''));
+    if (!isNaN(n)) {
+      if (Number.isInteger(n)) return String(n);
+      return String(n);
+    }
+    return s;
+  }
+  
+  /* Prepare rows into internal shape (same fields used by charts) */
+  function prepareRows(rows) {
+    if (!rows || !rows.length) return [];
+    columns = Object.keys(rows[0] || {});
+    const det = detect(columns);
+  
+    return rows.map((r, idx) => {
+      const out = Object.assign({}, r);
+      const rawId = det && det.id ? out[det.id] : undefined;
+      const fallbackNumeric = det && det.anyNumeric ? out[det.anyNumeric] : undefined;
+      out.__id = formatIdValue(rawId ?? fallbackNumeric ?? null, idx);
+      out.__dept = (out[det.dept] || 'Unknown') + '';
+      out.__pred = (out[det.predicted] || out['Predicted_Performance'] || out['Predicted Performance'] || out['Performance'] || '').toString();
+      out.__sat = parseFloat((out[det.sat] ?? out['Employee_Satisfaction_Score'] ?? '').toString().replace(/[^0-9.-]/g,'')) || null;
+      out.__monthly = parseFloat((out[det.monthly_salary] ?? out['Monthly_Salary'] ?? '').toString().replace(/[^0-9.-]/g,'')) || null;
+      out.__work_hours = parseFloat((out[det.work_hours] ?? out['Work_Hours_Per_Week'] ?? '').toString().replace(/[^0-9.-]/g,'')) || null;
+      out.__training = parseFloat((out[det.training_hours] ?? out['Training_Hours'] ?? 0) || 0) || 0;
+      out.__sick = parseFloat((out[det.sick_days] ?? out['Sick_Days'] ?? 0) || 0) || 0;
+      out.__overtime = parseFloat((out[det.overtime] ?? out['Overtime_Hours'] ?? '').toString().replace(/[^0-9.-]/g,'')) || 0;
+      out.__projects = parseFloat((out[det.projects] ?? out['Projects'] ?? 0) || 0) || 0;
+      out.__attendance = (out.__sick===null)? null : Math.max(0, (1 - (out.__sick / 260)) * 100);
+      if (out.__monthly !== null && out.__work_hours !== null && out.__work_hours !== 0) {
+        out.__salary_hr = +(out.__monthly / (out.__work_hours*4)).toFixed(2);
+      } else out.__salary_hr = null;
+      out.__gender = (out[det.gender] || out['Gender'] || out['gender'] || '').toString();
+      out.__position = (out[det.position] || out['Position'] || out['Job Title'] || out['role'] || '') || '';
+  
+      // If predicted label not present, try derive from numeric Performance_Score
+      if (!out.__pred || out.__pred.trim()==='') {
+        const score = parseFloat((out['Performance_Score'] ?? out['performance_score'] ?? '').toString().replace(/[^0-9.-]/g,'')) || null;
+        if (score !== null && !isNaN(score)) {
+          if (score >= 4.5) out.__pred = 'High';
+          else if (score >= 4.0) out.__pred = 'Above Average';
+          else if (score >= 3.0) out.__pred = 'Average';
+          else if (score >= 2.0) out.__pred = 'Below Average';
+          else out.__pred = 'Low';
+        } else {
+          out.__pred = out.__pred || 'Unknown';
+        }
+      }
+      out.__pred = out.__pred.toString().trim();
+      return out;
+    });
+  }
+  
+  /* ----------------- Rendering helpers (charts, tables, KPIs) ----------------- */
+  
+  function renderKPIs(rows){
+    const total = rows.length;
+    const satRows = rows.filter(r=> r.__sat !== null && !isNaN(r.__sat));
+    const avgSat = +(satRows.reduce((s,r)=> s + (r.__sat||0), 0) / Math.max(1, satRows.length)).toFixed(2);
+    const salaryRows = rows.filter(r=> r.__salary_hr !== null && !isNaN(r.__salary_hr));
+    const avgSalaryHr = +(salaryRows.reduce((s,r)=> s + (r.__salary_hr||0), 0) / Math.max(1, salaryRows.length)).toFixed(2);
+  
+    const highCount = rows.filter(r=> /^high$/i.test((r.__pred||'').toString())).length;
+    const highPct = total ? Math.round((highCount/total)*100) + '%' : '0%';
+  
+    document.getElementById('k_total').textContent = total || '—';
+    document.getElementById('k_sat').textContent = isNaN(avgSat) ? '—' : avgSat;
+    document.getElementById('k_salary').textContent = isNaN(avgSalaryHr) ? '—' : 'RM ' + avgSalaryHr;
+    document.getElementById('k_out').textContent = highPct;
+    document.getElementById('insightCount').textContent = total ? (total + ' records') : '0 records';
+    document.getElementById('leftSummary').textContent = total ? (total + ' records • Avg sat: ' + (isNaN(avgSat)?'—':avgSat)) : 'No data loaded';
+  }
+  
+  function getDistribution(rows){
+    const map = {};
+    rows.forEach(r => {
+      const k = r.__pred || 'Unknown';
+      map[k] = (map[k]||0) + 1;
+    });
+    const labels = [], values = [];
+    PERF_ORDER.forEach(k => { if (map[k]) { labels.push(k); values.push(map[k]); delete map[k]; } });
+    for (let k in map){ labels.push(k); values.push(map[k]); }
+    return { labels, values };
+  }
+  
+  function getDeptAverages(rows){
+    const agg = {};
+    rows.forEach(r => {
+      const d = r.__dept || 'Unknown';
+      if (!agg[d]) agg[d] = { sumProjects:0, count:0 };
+      const p = Number(r.__projects) || 0;
+      agg[d].sumProjects += p;
+      agg[d].count += 1;
+    });
+    const out=[];
+    for (let d in agg) out.push({ dept:d, avg: agg[d].count ? agg[d].sumProjects/agg[d].count : 0, count: agg[d].count });
+    out.sort((a,b)=> b.avg - a.avg);
+    return out.slice(0,10);
+  }
+  
+  function attendanceSummary(rows){
+    const arr = rows.map(r=> (r.__attendance===null? null : +r.__attendance)).filter(v=> v!==null);
+    if (!arr.length) return { avg: null, bands: {} };
+    const avg = +(arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(2);
+    const bands = { '>=98%':0, '95-98%':0, '90-95%':0, '<90%':0 };
+    arr.forEach(v=>{
+      if (v >= 98) bands['>=98%']++;
+      else if (v >= 95) bands['95-98%']++;
+      else if (v >= 90) bands['90-95%']++;
+      else bands['<90%']++;
+    });
+    return { avg, bands };
+  }
+  
+  function genderCounts(rows){
+    const map={};
+    rows.forEach(r=>{
+      const g = (r.__gender || 'Unknown').toString().trim() || 'Unknown';
+      map[g] = (map[g]||0) + 1;
+    });
+    return map;
+  }
+  
+  function trainingBuckets(rows){
+    const buckets = [0,1,5,10,20,40,100];
+    const labels = buckets.map((b,i)=> i===0? '<=0' : '<= ' + b);
+    const counts = buckets.map(()=>0);
+    rows.forEach(r=>{
+      const v = + (r.__training || 0);
+      for (let i=0;i<buckets.length;i++){
+        if (v <= buckets[i]) { counts[i]++; break; }
+      }
+    });
+    return { labels, counts };
+  }
+  
+  /* render table (first 200 rows) */
+  function renderTable(rows){
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    rows.slice(0,200).forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.className = 'table-row-clickable';
+      const id = r.__id || '';
+      const dept = r.__dept || '';
+      const pred = r.__pred || '';
+      const sat = (r.__sat===null || isNaN(r.__sat)) ? '—' : r.__sat;
+      const sal = (r.__salary_hr===null || isNaN(r.__salary_hr)) ? '—' : ('RM ' + r.__salary_hr);
+      const att = r.__attendance === null ? '—' : (r.__attendance.toFixed(1) + '%');
+      tr.innerHTML = `<td style="font-weight:600">${escapeHtml(id)}</td><td>${escapeHtml(dept)}</td><td>${escapeHtml(pred)}</td><td>${escapeHtml(sat)}</td><td>${escapeHtml(sal)}</td><td>${escapeHtml(att)}</td>`;
+      tr.addEventListener('click', ()=> {
+        document.getElementById('employeeFilter').value = id;
+        currentFilter.employee = id;
+        applyFilters();
+      });
+      tbody.appendChild(tr);
+    });
+    if (!rows.length) tbody.innerHTML = '<tr class="no-data-row"><td colspan="6">No matching records</td></tr>';
+    document.getElementById('tableCount').textContent = (rows.length>200? '200 rows' : rows.length + ' rows');
+  }
+  
+  /* safe innerText setter */
+  function escapeHtml(s){ return (s===null || s===undefined) ? '' : String(s); }
+  
+  /* render charts (Chart.js) */
+  function renderDonut(distData){
+    const ctx = document.getElementById('distDonut').getContext('2d');
+    const colors = ['#4ea1fc','#6ad29a','#ffb06b','#c27bff','#8fb3ff','#87c7d9'];
+    if (donutChart) {
+      donutChart.data.labels = distData.labels;
+      donutChart.data.datasets[0].data = distData.values;
+      donutChart.update();
+      updateDistLegend(distData, donutChart.data.datasets[0].backgroundColor);
+      return;
+    }
+    donutChart = new Chart(ctx, {
+      type:'doughnut',
+      data:{ labels: distData.labels, datasets:[{ data: distData.values, backgroundColor: colors.slice(0, distData.labels.length), borderColor:'#0d1a2d', borderWidth:2 }]},
+      options:{
+        cutout:'65%',
+        plugins:{ legend:{display:false}, tooltip:{callbacks:{ label: (it)=> `${it.label}: ${it.parsed}` }}},
+        onClick: (evt, items) => {
+          if (!items.length) return;
+          const idx = items[0].index;
+          const label = donutChart.data.labels[idx];
+          document.getElementById('perfFilter').value = label;
+          currentFilter.performance = label;
+          applyFilters();
+        }
+      }
+    });
+    updateDistLegend(distData, donutChart.data.datasets[0].backgroundColor);
+  }
+  function updateDistLegend(distData, colors){
+    const el = document.getElementById('distLegend');
+    el.innerHTML = '';
+    distData.labels.forEach((lab,i)=>{
+      const v = distData.values[i] || 0;
+      const color = (colors && colors[i]) ? colors[i] : 'var(--accent)';
+      const row = document.createElement('div'); row.className = 'legend-row';
+      row.style.display='flex'; row.style.justifyContent='space-between'; row.style.alignItems='center'; row.style.padding='6px 4px';
+      const left = document.createElement('div'); left.style.display='flex'; left.style.alignItems='center'; left.style.gap='8px';
+      const sw = document.createElement('span'); sw.style.width='12px'; sw.style.height='12px'; sw.style.background=color; sw.style.display='inline-block'; sw.style.borderRadius='3px';
+      const label = document.createElement('span'); label.style.color='#fff'; label.style.fontWeight='600'; label.textContent = lab;
+      left.appendChild(sw); left.appendChild(label);
+      const right = document.createElement('div'); right.style.color='var(--muted)'; right.textContent = v;
+      row.appendChild(left); row.appendChild(right);
+      el.appendChild(row);
+    });
+  }
+  
+  function renderDeptBar(deptData){
+    const ctx = document.getElementById('deptBar').getContext('2d');
+    const labels = deptData.map(d=>d.dept);
+    const values = deptData.map(d=> +(d.avg.toFixed(2)));
+    if (deptChart) { deptChart.data.labels = labels; deptChart.data.datasets[0].data = values; deptChart.update(); return; }
+    deptChart = new Chart(ctx, {
+      type:'bar',
+      data:{ labels, datasets:[{ label:'Avg Projects', data:values, backgroundColor:'#87b9ff' }]},
+      options:{
+        plugins:{ legend:{display:false}, tooltip:{mode:'index'}},
+        scales:{ y:{ beginAtZero:true, ticks:{ color:'#dbe6fb' } }, x:{ ticks:{ color:'#dbe6fb' } } },
+        onClick: (evt, items) => { if (!items.length) return; const idx = items[0].index; const dept = deptChart.data.labels[idx]; document.getElementById('departmentFilter').value = dept; currentFilter.department = dept; applyFilters(); }
+      }
+    });
+  }
+  
+  function renderTrainingHist(rows){
+    const ctx = document.getElementById('trainingHist').getContext('2d');
+    const hist = trainingBuckets(rows);
+    if (trainingChart) { trainingChart.data.labels = hist.labels; trainingChart.data.datasets[0].data = hist.counts; trainingChart.update(); return; }
+    trainingChart = new Chart(ctx, { type:'bar', data:{ labels:hist.labels, datasets:[{ label:'Employees', data:hist.counts, backgroundColor:'#ffb06b' }]}, options:{ plugins:{legend:{display:false}}, scales:{ y:{ beginAtZero:true, ticks:{ color:'#dbe6fb' } }, x:{ ticks:{ color:'#dbe6fb' } } } } });
+  }
+  
+  function renderGenderPie(rows){
+    const ctx = document.getElementById('genderPie').getContext('2d');
+    const map = genderCounts(rows);
+    const labels = Object.keys(map);
+    const values = labels.map(k=>map[k]);
+    const colors = ['#4ea1fc','#6ad29a','#c27bff','#8fb3ff'];
+    if (genderChart) { genderChart.data.labels = labels; genderChart.data.datasets[0].data = values; genderChart.update(); updateGenderLegend(labels, values, genderChart.data.datasets[0].backgroundColor); return; }
+    genderChart = new Chart(ctx, { type:'pie', data:{ labels, datasets:[{ data:values, backgroundColor: colors.slice(0,labels.length) }] }, options:{ plugins:{ legend:{ display:false } }, onClick:(evt, items)=>{ if(!items.length) return; const idx=items[0].index; const label = genderChart.data.labels[idx]; document.getElementById('genderFilter').value = label; currentFilter.gender = label; applyFilters(); } } });
+    updateGenderLegend(labels, values, colors.slice(0,labels.length));
+  }
+  function updateGenderLegend(labels, values, colors){ const el=document.getElementById('genderLegend'); el.innerHTML=''; labels.forEach((lab,i)=>{ const div=document.createElement('div'); div.style.display='flex'; div.style.alignItems='center'; div.style.gap='10px'; div.style.marginBottom='6px'; div.innerHTML=`<span style="display:inline-block;width:12px;height:12px;background:${colors[i]};border-radius:3px"></span><span style="color:#fff">${lab}</span><span style="color:var(--muted); margin-left:auto">${values[i]}</span>`; el.appendChild(div); }); }
+  
+  /* Populate selects */
+  function populateDepartmentFilter(rows){
+    const set = new Set(rows.map(r=> r.__dept || 'Unknown'));
+    const sel = document.getElementById('departmentFilter'); sel.innerHTML = '<option value="">All Departments</option>';
+    Array.from(set).sort().forEach(d => { const opt=document.createElement('option'); opt.value=d; opt.textContent=d; sel.appendChild(opt); });
+  }
+  function populatePerformanceSelect(rows){
+    const set = new Set(rows.map(r=> r.__pred || 'Unknown'));
+    const sel = document.getElementById('perfFilter'); sel.innerHTML = '<option value="">All Performance</option>';
+    PERF_ORDER.forEach(label => { if (set.has(label)) { const opt=document.createElement('option'); opt.value=label; opt.textContent=label; sel.appendChild(opt); set.delete(label); } });
+    Array.from(set).sort().forEach(d=>{ const opt=document.createElement('option'); opt.value=d; opt.textContent=d; sel.appendChild(opt); });
+  }
+  function populateGenderSelect(rows){
+    const set = new Set(rows.map(r=> (r.__gender||'Unknown').toString()));
+    const sel = document.getElementById('genderFilter'); sel.innerHTML = '<option value="">All</option>';
+    Array.from(set).sort().forEach(d=>{ const opt=document.createElement('option'); opt.value=d; opt.textContent=d; sel.appendChild(opt); });
+  }
+  function populatePositionSelect(rows){
+    const set = new Set(rows.map(r=> (r.__position||'').toString().trim() || 'Unknown'));
+    const sel = document.getElementById('positionFilter'); const prev = sel.value; sel.innerHTML = '<option value="">All Positions</option>';
+    Array.from(set).filter(x=>x!=='').sort().forEach(p=>{ const opt=document.createElement('option'); opt.value=p; opt.textContent=p; sel.appendChild(opt); });
+    if (prev){ sel.value = prev; if (sel.value !== prev) sel.value = ''; }
+  }
+  function populateAttendanceSelect(rows){
+    const sel = document.getElementById('attendanceQuick'); const prev = sel.value; const summary = attendanceSummary(rows); const bands = summary.bands || {};
+    sel.innerHTML = ''; const anyOpt = document.createElement('option'); anyOpt.value=''; anyOpt.textContent='Any'; sel.appendChild(anyOpt);
+    ['>=98%','95-98%','90-95%','<90%'].forEach(k=>{ const opt=document.createElement('option'); opt.value=k; opt.textContent = `${k}: ${bands[k]||0}`; sel.appendChild(opt); });
+    if (prev){ sel.value = prev; if (sel.value !== prev) sel.value = ''; }
+  }
+  
+  /* Top/Bottom helpers (full data references rawRows) */
+  function getTopFromFull(field,n=10){ return rawRows.slice().sort((a,b)=>(b[field]||0)-(a[field]||0)).slice(0,n); }
+  function getBottomFromFull(field,n=10){ return rawRows.slice().sort((a,b)=>(a[field]||0)-(b[field]||0)).slice(0,n); }
+  
+  function renderTop10(filteredRows){
+    // Projects
+    const tp = getTopFromFull('__projects',10).filter(r=> filteredRows.find(fr=>fr.__id===r.__id));
+    const tpBody = document.querySelector('#topProjectsTable tbody'); tpBody.innerHTML = '';
+    if (!tp.length) tpBody.innerHTML = '<tr class="no-data-row"><td colspan="3">No matching records</td></tr>';
+    else tp.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td style="font-weight:600">${escapeHtml(r.__id)}</td><td>${escapeHtml(r.__dept)}</td><td style="text-align:right">${r.__projects||0}</td>`; tr.addEventListener('click', ()=>{ document.getElementById('employeeFilter').value = r.__id; currentFilter.employee = r.__id; applyFilters(); }); tpBody.appendChild(tr); });
+  
+    // Work
+    const tw = getTopFromFull('__work_hours',10).filter(r=> filteredRows.find(fr=>fr.__id===r.__id));
+    const twBody = document.querySelector('#topWorkTable tbody'); twBody.innerHTML = '';
+    if (!tw.length) twBody.innerHTML = '<tr class="no-data-row"><td colspan="3">No matching records</td></tr>';
+    else tw.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td style="font-weight:600">${escapeHtml(r.__id)}</td><td>${escapeHtml(r.__dept)}</td><td style="text-align:right">${r.__work_hours||0}</td>`; tr.addEventListener('click', ()=>{ document.getElementById('employeeFilter').value = r.__id; currentFilter.employee = r.__id; applyFilters(); }); twBody.appendChild(tr); });
+  
+    // Overtime
+    const to = getTopFromFull('__overtime',10).filter(r=> filteredRows.find(fr=>fr.__id===r.__id));
+    const toBody = document.querySelector('#topOvertimeTable tbody'); toBody.innerHTML = '';
+    if (!to.length) toBody.innerHTML = '<tr class="no-data-row"><td colspan="3">No matching records</td></tr>';
+    else to.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td style="font-weight:600">${escapeHtml(r.__id)}</td><td>${escapeHtml(r.__dept)}</td><td style="text-align:right">${r.__overtime||0}</td>`; tr.addEventListener('click', ()=>{ document.getElementById('employeeFilter').value = r.__id; currentFilter.employee = r.__id; applyFilters(); }); toBody.appendChild(tr); });
+  }
+  
+  function renderBottom10(filteredRows){
+    const bp = getBottomFromFull('__projects',10).filter(r=> filteredRows.find(fr=>fr.__id===r.__id));
+    const bpBody = document.querySelector('#bottomProjectsTable tbody'); bpBody.innerHTML = '';
+    if (!bp.length) bpBody.innerHTML = '<tr class="no-data-row"><td colspan="3">No matching records</td></tr>';
+    else bp.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td style="font-weight:600">${escapeHtml(r.__id)}</td><td>${escapeHtml(r.__dept)}</td><td style="text-align:right">${r.__projects||0}</td>`; tr.addEventListener('click', ()=>{ document.getElementById('employeeFilter').value = r.__id; currentFilter.employee = r.__id; applyFilters(); }); bpBody.appendChild(tr); });
+  
+    const bw = getBottomFromFull('__work_hours',10).filter(r=> filteredRows.find(fr=>fr.__id===r.__id));
+    const bwBody = document.querySelector('#bottomWorkTable tbody'); bwBody.innerHTML = '';
+    if (!bw.length) bwBody.innerHTML = '<tr class="no-data-row"><td colspan="3">No matching records</td></tr>';
+    else bw.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td style="font-weight:600">${escapeHtml(r.__id)}</td><td>${escapeHtml(r.__dept)}</td><td style="text-align:right">${r.__work_hours||0}</td>`; tr.addEventListener('click', ()=>{ document.getElementById('employeeFilter').value = r.__id; currentFilter.employee = r.__id; applyFilters(); }); bwBody.appendChild(tr); });
+  
+    const bo = getBottomFromFull('__overtime',10).filter(r=> filteredRows.find(fr=>fr.__id===r.__id));
+    const boBody = document.querySelector('#bottomOvertimeTable tbody'); boBody.innerHTML = '';
+    if (!bo.length) boBody.innerHTML = '<tr class="no-data-row"><td colspan="3">No matching records</td></tr>';
+    else bo.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td style="font-weight:600">${escapeHtml(r.__id)}</td><td>${escapeHtml(r.__dept)}</td><td style="text-align:right">${r.__overtime||0}</td>`; tr.addEventListener('click', ()=>{ document.getElementById('employeeFilter').value = r.__id; currentFilter.employee = r.__id; applyFilters(); }); boBody.appendChild(tr); });
+  }
+  
+  /* employee income panel */
+  function updateEmployeeIncomePanel(){
+    const empId = (currentFilter.employee || '').toString().trim();
+    const panel = document.getElementById('incomePanel');
+    if (!empId) { panel.style.display='none'; return; }
+    const found = rawRows.find(r => (r.__id||'').toString() === empId);
+    if (!found) { panel.style.display='none'; return; }
+    const m = found.__monthly;
+    const formatted = (m === null || m === undefined) ? '—' : ('RM ' + Number(m).toLocaleString(undefined, {maximumFractionDigits:2, minimumFractionDigits:0}));
+    document.getElementById('incomeValue').textContent = formatted;
+    document.getElementById('incomeEmployeeId').textContent = empId;
+    document.getElementById('incomePosition').textContent = (found.__position || '—');
+    panel.style.display = 'block';
+  }
+  
+  /* filtering */
+  function getFilteredRows(){
+    let rows = rawRows.slice();
+    const perf = currentFilter.performance;
+    const dept = currentFilter.department;
+    const att = currentFilter.attendance;
+    const gen = currentFilter.gender;
+    const emp = currentFilter.employee;
+    const pos = currentFilter.position;
+  
+    if (dept) rows = rows.filter(r=> r.__dept === dept);
+    if (perf) rows = rows.filter(r=> r.__pred === perf);
+    if (gen) rows = rows.filter(r=> (r.__gender||'').toString() === gen);
+  
+    if (att === '>=98%') rows = rows.filter(r=> r.__attendance !== null && r.__attendance >= 98);
+    else if (att === '95-98%') rows = rows.filter(r=> r.__attendance !== null && r.__attendance >= 95 && r.__attendance < 98);
+    else if (att === '90-95%') rows = rows.filter(r=> r.__attendance !== null && r.__attendance >= 90 && r.__attendance < 95);
+    else if (att === '<90%') rows = rows.filter(r=> r.__attendance !== null && r.__attendance < 90);
+  
+    if (pos) rows = rows.filter(r => (r.__position || '').toString() === pos);
+    if (emp) rows = rows.filter(r=> (r.__id||'').toString() === emp);
+    return rows;
+  }
+  
+  function applyFilters(){
+    currentFilter.department = document.getElementById('departmentFilter').value || "";
+    currentFilter.performance = document.getElementById('perfFilter').value || "";
+    currentFilter.attendance = document.getElementById('attendanceQuick').value || "";
+    currentFilter.gender = document.getElementById('genderFilter').value || "";
+    currentFilter.employee = document.getElementById('employeeFilter').value || "";
+    currentFilter.position = document.getElementById('positionFilter').value || "";
+  
+    // sync UI
+    document.getElementById('departmentFilter').value = currentFilter.department;
+    document.getElementById('perfFilter').value = currentFilter.performance;
+    document.getElementById('attendanceQuick').value = currentFilter.attendance;
+    document.getElementById('genderFilter').value = currentFilter.gender;
+    document.getElementById('employeeFilter').value = currentFilter.employee;
+    document.getElementById('positionFilter').value = currentFilter.position;
+  
+    const filteredRows = getFilteredRows();
+  
+    renderTable(filteredRows);
+    renderTrainingHist(filteredRows);
+    renderGenderPie(filteredRows);
+    renderAttendanceDonut(filteredRows);
+    populateAttendanceSelect(filteredRows);
+  
+    const dist = getDistribution(filteredRows); renderDonut(dist);
+    const deptAvg = getDeptAverages(filteredRows); renderDeptBar(deptAvg);
+  
+    renderTop10(filteredRows); renderBottom10(filteredRows);
+  
+    renderKPIs(filteredRows);
+    updateQuickInsights(filteredRows);
+  
+    updateEmployeeIncomePanel();
+  }
+  
+  function updateQuickInsights(rows){
+    const lowOver = rows.filter(r=> /low|below average/i.test(r.__pred) && ( (r.__overtime && r.__overtime > 20) || (r.__training && r.__training > 40) )).length;
+    document.getElementById('insLowOver').textContent = lowOver? (lowOver + ' employees') : '0';
+    const avgAtt = attendanceSummary(rows).avg;
+    document.getElementById('insAvgAttendance').textContent = avgAtt===null? '—' : (avgAtt.toFixed(1) + '%');
+    const avgTrain = +(rows.filter(r=> r.__training!==null).reduce((s,r)=> s + r.__training, 0) / Math.max(1, rows.filter(r=> r.__training!==null).length)).toFixed(1);
+    document.getElementById('insAvgTraining').textContent = isNaN(avgTrain)? '—' : (avgTrain + ' hrs');
+  }
+  
+  /* render attendance donut */
+  function renderAttendanceDonut(rows){
+    const ctx = document.getElementById('attendanceDonut').getContext('2d');
+    const summary = attendanceSummary(rows);
+    const labels = Object.keys(summary.bands || {});
+    const values = labels.map(k=> summary.bands[k] || 0);
+    const colors = ['#6ad29a','#4ea1fc','#ffd600','#ff8b6b'];
+    if (attendanceChart) { attendanceChart.data.labels = labels; attendanceChart.data.datasets[0].data = values; attendanceChart.update(); } 
+    else {
+      attendanceChart = new Chart(ctx, { type:'doughnut', data:{ labels, datasets:[{ data: values, backgroundColor: colors.slice(0,labels.length), borderColor:'#0d1a2d', borderWidth:1 }]}, options:{ cutout:'70%', plugins:{ legend:{display:false} }, onClick:(evt, items)=>{ if(!items.length) return; const idx=items[0].index; const band = attendanceChart.data.labels[idx]; document.getElementById('attendanceQuick').value = band; currentFilter.attendance = band; applyFilters(); } } });
+    }
+    document.getElementById('insAvgAttendance').textContent = summary.avg===null? '—' : (summary.avg.toFixed(1) + '%');
+    const bandsEl = document.getElementById('attendanceBands'); bandsEl.innerHTML='';
+    const order = ['>=98%','95-98%','90-95%','<90%'];
+    const colorMap = { '>=98%': colors[0], '95-98%': colors[1], '90-95%': colors[2], '<90%': colors[3] };
+    order.forEach(k => { const div=document.createElement('div'); div.className='att-band'; const sw=document.createElement('span'); sw.className='sw'; sw.style.background = colorMap[k] || '#666'; const lbl=document.createElement('span'); lbl.style.color='var(--muted)'; lbl.textContent = `${k}: ${summary.bands[k]||0}`; div.appendChild(sw); div.appendChild(lbl); bandsEl.appendChild(div); });
+  }
+  
+  /* =========================
+     Loading pipeline
+     - If there's stored CSV (idb/localStorage), parse & render
+     - Also listen to storage events so analysis.html can update dashboard automatically
+     ========================= */
+  
+  async function loadFromStoredOrText(csvText) {
+    if (!csvText) {
+      const stored = await getStoredCSV();
+      if (!stored) { console.warn('No CSV found in storage'); document.getElementById('leftSummary').textContent = 'No data — run analysis to create CSV'; return; }
+      csvText = stored;
+    }
+  
+    // sanitize initial string (remove ascii nulls etc)
+    csvText = csvText.replace(/\0/g, '').trim();
+    if (!csvText) { document.getElementById('leftSummary').textContent = 'CSV is empty'; return; }
+  
+    // parse robustly
+    let parsed;
+    try {
+      parsed = await parseCSVToObjects(csvText);
+    } catch (err) {
+      console.error('CSV parse failed', err);
+      document.getElementById('leftSummary').textContent = 'Failed to parse CSV';
+      return;
+    }
+  
+    // sanitize rows -> remove ghost rows
+    const sanitized = sanitizeParsedRows(parsed);
+    if (!sanitized.length) {
+      document.getElementById('leftSummary').textContent = 'No valid rows found after cleaning';
+      // clear UI
+      rawRows = [];
+      fullRender([]);
+      return;
+    }
+  
+    // prepare into internal shape and render
+    const prepared = prepareRows(sanitized);
+    fullRender(prepared);
+  }
+  
+  /* fullRender: set rawRows and render everything based on full dataset */
+  function fullRender(rows){
+    rawRows = rows;
+    renderKPIs(rows);
+    renderTable(rows);
+    renderTrainingHist(rows);
+    renderGenderPie(rows);
+    renderAttendanceDonut(rows);
+    const dist = getDistribution(rows); renderDonut(dist);
+    const deptAvg = getDeptAverages(rows); renderDeptBar(deptAvg);
+    populateDepartmentFilter(rows); populatePerformanceSelect(rows); populateGenderSelect(rows); populateAttendanceSelect(rows);
+    populatePositionSelect(rows);
+    renderTop10(rows); renderBottom10(rows); updateQuickInsights(rows);
+    updateEmployeeIncomePanel();
+  }
+  
+  /* =========================
+     Wiring UI events
+     ========================= */
+  document.getElementById('perfFilter').addEventListener('change', ()=> applyFilters());
+  document.getElementById('departmentFilter').addEventListener('change', ()=> applyFilters());
+  document.getElementById('attendanceQuick').addEventListener('change', ()=> applyFilters());
+  document.getElementById('genderFilter').addEventListener('change', ()=> applyFilters());
+  document.getElementById('positionFilter').addEventListener('change', ()=> applyFilters());
+  document.getElementById('employeeFilter').addEventListener('input', ()=> { currentFilter.employee = document.getElementById('employeeFilter').value || ''; });
+  document.getElementById('clearFilter').addEventListener('click', ()=> {
+    document.getElementById('departmentFilter').value = '';
+    document.getElementById('perfFilter').value = '';
+    document.getElementById('attendanceQuick').value = '';
+    document.getElementById('genderFilter').value = '';
+    document.getElementById('positionFilter').value = '';
+    document.getElementById('employeeFilter').value = '';
+    currentFilter = { department:'', performance:'', attendance:'', gender:'', employee:'', position:'' };
+    applyFilters();
+  });
+  
+  /* Download filtered CSV */
+  document.getElementById('downloadTop').addEventListener('click', ()=>{
+    const rows = getFilteredRows();
+    if (!rows.length) return alert('No rows to download for the current filter.');
+    const header = ['Employee_ID','Department','Position','Predicted_Performance','Employee_Satisfaction_Score','Salary_Per_Hour','Attendance_Rate','Training_Hours','Gender','Overtime_Hours','Projects'];
+    const lines = [header.join(',')];
+    rows.forEach(r=>{
+      const line = [
+        `"${(r.__id||'')}"`,
+        `"${(r.__dept||'')}"`,
+        `"${(r.__position||'')}"`,
+        `"${(r.__pred||'')}"`,
+        (r.__sat===null? '' : r.__sat),
+        (r.__salary_hr===null? '' : r.__salary_hr),
+        (r.__attendance===null? '' : r.__attendance.toFixed(2)),
+        (r.__training===null? '' : r.__training),
+        `"${(r.__gender||'')}"`,
+        (r.__overtime===null? '' : r.__overtime),
+        (r.__projects===null? '' : r.__projects)
+      ].join(',');
+      lines.push(line);
+    });
+    const csv = lines.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'dashboard_export.csv';
+    a.click();
+  });
+  
+  /* Watch for storage changes from analysis page — reload if lastProcessedCSV updated */
+  window.addEventListener('storage', (ev)=>{
+    if (!ev.key) return;
+    const interested = ['lastProcessedCSV','lastCSV'];
+    if (interested.includes(ev.key)) {
+      // slight delay to allow analysis page to finish writing
+      setTimeout(async ()=> {
+        const val = await getStoredCSV();
+        if (val) { loadFromStoredOrText(val); }
+      }, 300);
+    }
+  });
+  
+  /* On load try to read any stored CSV and render */
+  window.addEventListener('load', async ()=>{
+    try {
+      const stored = await getStoredCSV();
+      if (stored) {
+        await loadFromStoredOrText(stored);
+      } else {
+        document.getElementById('leftSummary').textContent = 'No data — run analysis (upload) to populate dashboard';
+      }
+    } catch (e){
+      console.warn('Load failed', e);
+      document.getElementById('leftSummary').textContent = 'Error loading stored CSV';
+    }
+  });
+  </script>
+  </body>
+  </html>
+

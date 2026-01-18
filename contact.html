@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Contact Us — SmartAppraise AI — SY-II</title>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+--bg-1:#0d1a2d;
+--bg-2:#122139;
+--card:#192841;
+--muted:#b4bcd7;
+--accent:#ffd600;
+--blue:#4ea1fc;
+}
+*{box-sizing:border-box}
+
+body{
+margin:0;
+font-family:'Roboto',system-ui,Arial;
+background:linear-gradient(135deg,var(--bg-1) 0%,var(--bg-2) 100%);
+color:#eef2f8;
+-webkit-font-smoothing:antialiased;
+-moz-osx-font-smoothing:grayscale;
+min-height:100vh;
+
+/* Make footer stay at bottom */
+display:flex;
+flex-direction:column;
+}
+
+/* NAVBAR */
+.navbar{
+position:fixed;
+top:0;left:0;right:0;
+height:72px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:14px 36px;
+background: rgba(23,38,68,0.75);
+backdrop-filter: blur(6px);
+border-bottom:1px solid rgba(255,255,255,0.03);
+z-index:1000;
+}
+.brand{
+font-family:'Montserrat';
+font-weight:700;
+color:#fff;
+font-size:1.15rem;
+letter-spacing:0.6px;
+}
+.brand .accent{ color:var(--accent) }
+.nav-links{ display:flex; align-items:center; gap:18px; }
+.nav-links a{
+color:var(--accent);
+text-decoration:none;
+font-weight:600;
+padding:6px 10px;
+border-radius:8px;
+transition: all .18s ease;
+}
+.nav-links a:hover{
+background:rgba(255,214,0,0.08);
+color:#fff;
+transform:translateY(-2px);
+}
+
+/* LAYOUT */
+main.wrap{
+max-width:1100px;
+margin:110px auto 40px;
+padding:0 24px;
+
+/* allow footer to push down */
+flex:1;
+}
+
+.card{
+background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+padding:28px;
+border-radius:16px;
+border:1px solid rgba(255,255,255,0.02);
+box-shadow:0 10px 26px rgba(0,0,0,0.45);
+}
+
+h1{
+font-family:'Montserrat';
+color:var(--accent);
+margin:0 0 12px;
+font-size:1.8rem;
+}
+p.lead{
+color:var(--muted);
+margin:0 0 18px;
+line-height:1.6;
+}
+
+/* FORM */
+form{
+display:flex;
+flex-direction:column;
+gap:14px;
+margin-top:14px;
+}
+label{
+color:#fff;
+font-weight:500;
+margin-bottom:2px;
+}
+input, textarea{
+width:100%;
+padding:12px;
+border-radius:10px;
+border:1px solid rgba(255,255,255,0.08);
+background:rgba(255,255,255,0.05);
+color:#fff;
+font-size:1rem;
+}
+textarea{ height:140px; resize:none; }
+
+button{
+background:var(--accent);
+color:#122139;
+padding:12px 18px;
+border:none;
+font-weight:700;
+border-radius:10px;
+cursor:pointer;
+box-shadow:0 6px 18px rgba(0,0,0,0.25);
+transition:.18s ease;
+}
+button:hover{
+transform:translateY(-2px);
+}
+
+/* FOOTER */
+footer.site-footer {
+      margin-top: auto;  /* This pushes the footer to the bottom of the page */
+      padding: 22px 14px;
+      text-align: center;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.005));
+      color: #9fb0d4;
+      border-top: 1px solid rgba(255, 255, 255, 0.02);
+    }
+
+/* RESPONSIVE */
+@media(max-width:900px){
+h1{ font-size:1.6rem; }
+}
+</style>
+</head>
+
+<body>
+<header class="navbar">
+<div class="brand">SmartAppraise AI by <span class="accent">SY-II</span></div>
+<nav class="nav-links">
+<a href="index.html">Home</a>
+<a href="analysis.html">Run Analysis</a>
+<a href="dashboard.html">View Dashboard</a>      
+<a href="guide.html">User Guide</a>
+<a href="about.html">About</a>
+<a href="contact.html">Contact</a>
+<a href="login.html">Logout</a>
+</nav>
+</header>
+
+<main class="wrap">
+<section class="card">
+<h1>Contact Us</h1>
+<p class="lead">
+Have questions, feedback, or need support with the Employee Performance Prediction — SY-II system?  
+We’re here to help! Reach out to our project team using the form below.
+</p>
+
+<form>
+<div>
+<label for="name">Your Name</label>
+<input type="text" id="name" placeholder="Enter your name" required />
+</div>
+
+<div>
+<label for="email">Email Address</label>
+<input type="email" id="email" placeholder="Enter your email" required />
+</div>
+
+<div>
+<label for="msg">Your Message</label>
+<textarea id="msg" placeholder="How can we help you?" required></textarea>
+</div>
+
+<button type="submit">Send Message</button>
+</form>
+</section>
+</main>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div>
+    © 2025 SY-II • SmartAppraise AI | Built by Yaw Chin Hen, Tam Sze Yin, Yang Ka Weng.<br>
+    Need help? <a href="contact.html" style="color:var(--accent); text-decoration:none">Contact us</a> • 
+    <a href="guide.html" style="color:var(--accent); text-decoration:none">User Guide</a>
+  </div>
+</footer>
+
+</body>
+</html>

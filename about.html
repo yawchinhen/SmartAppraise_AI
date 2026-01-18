@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>About — SmartAppraise AI — SY‑II</title>
+
+<!-- Fonts (same as index.html) -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+--bg-1:#0d1a2d;
+--bg-2:#122139;
+--card:#192841;
+--muted:#b4bcd7;
+--accent:#ffd600;
+--blue:#4ea1fc;
+ }
+*{box-sizing:border-box}
+body{
+margin:0;
+font-family:'Roboto',system-ui,Arial;
+background:linear-gradient(135deg,var(--bg-1) 0%,var(--bg-2) 100%);
+color:#eef2f8;
+-webkit-font-smoothing:antialiased;
+-moz-osx-font-smoothing:grayscale;
+min-height:100vh;
+ }
+
+/* NAV (copied from index.html for consistency) */
+.navbar{
+position:fixed;
+top:0;left:0;right:0;
+height:72px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:14px 36px;
+background: rgba(23,38,68,0.75);
+backdrop-filter: blur(6px);
+border-bottom:1px solid rgba(255,255,255,0.03);
+z-index:1000;
+ }
+.brand{
+font-family:'Montserrat';
+font-weight:700;
+color:#fff;
+font-size:1.15rem;
+letter-spacing:0.6px;
+ }
+.brand .accent{ color:var(--accent) }
+.nav-links{ display:flex; align-items:center; gap:18px; }
+.nav-links a{
+color:var(--accent);
+text-decoration:none;
+font-weight:600;
+padding:6px 10px;
+border-radius:8px;
+transition: all .18s ease;
+ }
+.nav-links a:hover{ background:rgba(255,214,0,0.08); color:#fff; transform:translateY(-2px) }
+
+/* PAGE LAYOUT */
+.wrap{ max-width:1100px; margin:110px auto 40px; padding: 0 24px; }
+.hero{
+display:flex;
+gap:28px;
+align-items:center;
+justify-content:space-between;
+flex-wrap:wrap;
+ }
+.intro{
+flex:1 1 420px;
+background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+padding:28px;
+border-radius:18px;
+box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+border:1px solid rgba(255,255,255,0.02);
+ }
+.intro .eyebrow{ color:var(--blue); font-weight:600; font-size:.9rem; margin-bottom:8px; display:inline-block }
+.intro h1{ font-family:'Montserrat'; color:var(--accent); margin:8px 0 12px; font-size:1.8rem; line-height:1.05 }
+.intro p.lead{ color:var(--muted); margin:0 0 12px; line-height:1.6 }
+
+/* TEAM GRID */
+.team {
+margin-top:22px;
+display:grid;
+grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+gap:18px;
+ }
+.member {
+background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+padding:18px;
+border-radius:14px;
+border:1px solid rgba(255,255,255,0.02);
+display:flex;
+gap:14px;
+align-items:flex-start;
+ }
+.avatar {
+width:68px;
+height:68px;
+border-radius:12px;
+flex:0 0 68px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-family:'Montserrat';
+font-weight:700;
+color:#122139;
+background:linear-gradient(180deg,var(--accent), #ffd66a);
+box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+ }
+.member-info h3{
+margin:0;
+font-size:1.05rem;
+color:#fff;
+font-family:'Montserrat';
+ }
+.member-info p.role{
+margin:6px 0 8px;
+font-size:0.9rem;
+color:var(--muted);
+ }
+.member-info p.bio{
+margin:0;
+color:#dbe6fb;
+font-size:0.92rem;
+line-height:1.45;
+ }
+
+/* CONTACT / CTA */
+.contact-cta{
+margin-top:22px;
+display:flex;
+gap:12px;
+flex-wrap:wrap;
+ }
+.btn-primary{
+background:var(--accent);
+color:#122139;
+border:none;
+padding:10px 18px;
+border-radius:10px;
+font-weight:700;
+cursor:pointer;
+box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+ }
+.btn-ghost{
+border:1px solid rgba(255,255,255,0.06);
+color:var(--muted);
+background:transparent;
+padding:10px 16px;
+border-radius:10px;
+cursor:pointer;
+ }
+
+/* FOOTER (consistent) */
+footer.site-footer{
+margin-top:40px;
+padding:22px 14px;
+text-align:center;
+background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+color:#9fb0d4;
+border-top:1px solid rgba(255,255,255,0.02);
+ }
+
+/* RESPONSIVE TWEAKS */
+@media (max-width:900px){
+.wrap{ margin:100px 16px 30px }
+.intro h1{ font-size:1.6rem }
+.avatar { width:60px; height:60px; flex:0 0 60px; font-size:1.05rem }
+ }
+</style>
+</head>
+<body>
+<!-- NAVBAR -->
+<header class="navbar" role="banner">
+<div class="brand">SmartAppraise AI by <span class="accent">SY-II</span></div>
+<nav class="nav-links" role="navigation" aria-label="Main navigation">
+<a href="index.html">Home</a>
+<a href="analysis.html">Run Analysis</a>
+<a href="dashboard.html">View Dashboard</a>      
+<a href="guide.html">User Guide</a>
+<a href="about.html">About</a>
+<a href="contact.html">Contact</a>
+<a href="login.html">Logout</a>
+</nav>
+</header>
+
+<!-- MAIN -->
+<main class="wrap" role="main">
+<section class="hero">
+<div class="intro">
+<div class="eyebrow">About the Team</div>
+<h1>Meet the Founders & Project Team</h1>
+<p class="lead">At the heart of our initiative is a shared belief that technology should solve real human problems. Our founders came together with a vision to transform data into meaningful impact by designing solutions that blend innovation, empathy, and practicality. Driven by curiosity and a commitment to positive change, they built this project as a platform that empowers users, improves decision-making, and bridges the gap between data and everyday life. Their goal remains simple: create something useful, accessible, and sustainable for everyone.</p>
+<p class="lead">Our project team is a multidisciplinary group of analysts, developers, designers, and problem-solvers working together to bring this platform to life. Each member contributes unique expertise—from machine learning and data engineering to user experience and content strategy. We collaborate closely, challenge ideas, and iterate constantly to ensure that our final product is reliable, intuitive, and impactful. United by teamwork and creativity, we strive to deliver work that makes a difference.</p>
+
+
+<div class="contact-cta">
+<button class="btn-primary" onclick="location.href='contact.html'">Contact the Team</button>
+<button class="btn-ghost" onclick="location.href='guide.html'">Read the User Guide</button>
+</div>
+</div>
+</section>
+
+<section style="width:100%; margin-top:18px;">
+<div class="team" aria-label="Founders and team members">
+<!-- Member 1 -->
+<div class="member" role="article" aria-labelledby="m1">
+<div class="avatar" aria-hidden="true">CH</div>
+<div class="member-info">
+<h3 id="m1">Yaw Chin Hen</h3>
+<p class="role">Project Leader</p>
+<p class="bio">Hello! I’m Yaw Chin Hen, the team leader of the Employee Performance Prediction — SY‑II project.
+My focus in this assignment is to coordinate system design, model integration, and user‑experience consistency across all pages. I’m passionate about using data‑driven approaches to solve real organisational challenges, and this project allowed me to explore how predictive analytics can support HR decision‑making. I believe in structured teamwork, clear communication, and building solutions that are both meaningful and user‑friendly.</p>
+</div>
+</div>
+
+<!-- Member 2 -->
+<div class="member" role="article" aria-labelledby="m2">
+<div class="avatar" aria-hidden="true">SAM</div>
+<div class="member-info">
+<h3 id="m2">Tam Sze Yin</h3>
+<p class="role">Team Member — System & Data Workflow Designer</p>
+<p class="bio">Hi everyone! I’m Tam Sze Yin, responsible for designing the data workflow and ensuring smooth interaction between the front‑end interface and machine‑learning backend.
+I enjoy turning complex processes into intuitive user experiences, especially in areas involving HR data, prediction results, and analytics. My goal in this project is to help create a reliable, easy‑to‑use platform that supports fair and efficient performance evaluation using modern data methods.</p>
+</div>
+</div>
+
+<!-- Member 3 -->
+<div class="member" role="article" aria-labelledby="m3">
+<div class="avatar" aria-hidden="true">KW</div>
+<div class="member-info">
+<h3 id="m3">Yang Ka Weng</h3>
+<p class="role">Team Member — UI/UX & Documentation Specialist</p>
+<p class="bio">Hello! I’m Yang Ka Weng, handling UI/UX refinement and documentation for our Employee Performance Prediction system.
+I focus on creating clean, accessible layouts and ensuring our system remains simple, consistent, and visually engaging. I believe that well‑designed interfaces play a critical role in how users understand and trust prediction tools. Working with my team, I strive to help shape a polished system that clearly communicates insights and enhances the HR workflow.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Optional project statement card -->
+<section style="margin-top:22px;">
+<div style="background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01)); padding:20px; border-radius:14px; border:1px solid rgba(255,255,255,0.02); box-shadow:0 8px 20px rgba(0,0,0,0.35)">
+<h3 style="margin:0 0 8px; color:var(--accent); font-family:'Montserrat'">Project Focus</h3>
+<p style="color:var(--muted); margin:0;">
+This project is built with one core purpose: to turn data into actionable insights that support better decision-making. Using machine learning, analytics, and a user-friendly interface, our platform allows users to generate accurate predictions and meaningful interpretations effortlessly. We aim to simplify complex information, enhance transparency, and offer a seamless experience for anyone exploring data-driven solutions. Through continuous development and real-world relevance, our focus remains on creating technology that serves people — not the other way around.</p>
+</div>
+</section>
+</main>
+
+<!-- FOOTER -->
+  <footer class="site-footer">
+    <div>
+      © 2025 SY-II • SmartAppraise AI | Built by Yaw Chin Hen, Tam Sze Yin, Yang Ka Weng.<br>
+      Need help? <a href="contact.html" style="color:var(--accent); text-decoration:none">Contact us</a> • 
+      <a href="guide.html" style="color:var(--accent); text-decoration:none">User Guide</a>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SmartAppraise AI — SY-II</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg-1:#0d1a2d;
+      --bg-2:#122139;
+      --card:#192841;
+      --muted:#b4bcd7;
+      --accent:#ffd600;
+      --blue:#4ea1fc;
+    }
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:'Roboto',system-ui,Arial;
+      background:linear-gradient(135deg,var(--bg-1) 0%,var(--bg-2) 100%);
+      color:#eef2f8;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      min-height:100vh;
+
+      /* Sticky footer layout */
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* NAV */
+    .navbar{
+      position:fixed;
+      top:0;left:0;right:0;
+      height:72px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 36px;
+      background: rgba(23,38,68,0.75);
+      backdrop-filter: blur(6px);
+      border-bottom:1px solid rgba(255,255,255,0.03);
+      z-index:1000;
+    }
+    .brand{
+      font-family:'Montserrat';
+      font-weight:700;
+      color:#fff;
+      font-size:1.15rem;
+      letter-spacing:0.6px;
+    }
+    .brand .accent{ color:var(--accent) }
+
+    .nav-links{ display:flex; align-items:center; gap:18px; }
+    .nav-links a{
+      color:var(--accent);
+      text-decoration:none;
+      font-weight:600;
+      padding:6px 10px;
+      border-radius:8px;
+      transition: all .18s ease;
+    }
+    .nav-links a:hover{ background:rgba(255,214,0,0.08); color:#fff; transform:translateY(-2px) }
+
+    /* PAGE LAYOUT */
+    .wrap{
+      max-width:1200px;
+      margin:110px auto 40px;
+      padding: 0 24px;
+      display:flex;
+      gap:40px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+
+      flex:1; /* ensures footer stays bottom */
+    }
+
+    /* Left column - intro */
+    .intro{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      width:100%;
+      max-width:540px;
+      padding:28px;
+      border-radius:18px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+      border:1px solid rgba(255,255,255,0.02);
+      animation: fadeInLeft .9s ease both;
+    }
+    .eyebrow{ color:var(--blue); font-weight:600; font-size:.9rem; margin-bottom:8px; display:inline-block }
+    h1{ font-family:'Montserrat'; color:var(--accent); margin:8px 0 12px; font-size:2.2rem; line-height:1.05}
+    p.lead{ color:var(--muted); margin:0 0 18px; line-height:1.6 }
+    .cta-row{ display:flex; gap:14px; margin-top:18px; flex-wrap:wrap; }
+
+    .btn-primary{
+      background:var(--accent);
+      color:#122139;
+      border:none;
+      padding:12px 22px;
+      border-radius:10px;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+      transition: all .16s ease;
+    }
+    .btn-primary:hover{ transform:translateY(-3px); background:#ffe56a }
+
+    .btn-ghost{
+      border:1px solid rgba(255,255,255,0.06);
+      color:var(--muted);
+      background:transparent;
+      padding:12px 18px;
+      border-radius:10px;
+      cursor:pointer;
+    }
+
+    .quick-features{ margin-top:22px; display:grid; gap:12px; grid-template-columns:repeat(2,1fr) }
+    .feature{
+      background:rgba(255,255,255,0.02);
+      padding:10px 12px;
+      border-radius:10px;
+      color:var(--muted);
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .feature .dot{ width:10px; height:10px; border-radius:50%; background:var(--blue); flex:0 0 10px }
+
+    /* Right column - visual */
+    .hero{
+      flex:1 1 420px;
+      min-width:300px;
+      max-width:640px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.01));
+      padding:22px;
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,0.02);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+      position:relative;
+      overflow:hidden;
+      animation: fadeInRight .9s ease both;
+    }
+
+    .chart-wrap{ position:relative; height:320px; display:flex; align-items:flex-end; justify-content:center; gap:22px; padding-bottom:30px }
+    .chart-bar { width:44px; border-radius:8px; background: linear-gradient(180deg,var(--blue),#2b78d9); transform-origin: bottom; opacity:0; animation: barGrow .9s ease forwards }
+    .chart-bar.b1{ height:110px; animation-delay:.2s }
+    .chart-bar.b2{ height:180px; animation-delay:.35s }
+    .chart-bar.b3{ height:140px; animation-delay:.5s }
+    .chart-bar.b4{ height:70px;  animation-delay:.65s }
+
+    .sparkline{ position:absolute; top:28px; right:20px; width:220px; height:70px; opacity:.95 }
+    .sparkline path{ stroke:var(--accent); stroke-width:3; fill:none; stroke-linecap:round }
+
+    /* features strip */
+    .features-strip{ display:flex; gap:18px; margin-top:18px; flex-wrap:wrap }
+    .pill{ background:rgba(255,255,255,0.02); padding:8px 12px; border-radius:999px; color:var(--muted); font-weight:600; font-size:0.95rem }
+
+    /* FOOTER — same design as contact.html */
+    footer.site-footer {
+      margin-top: auto;
+      padding: 22px 14px;
+      text-align: center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+      color: #9fb0d4;
+      border-top: 1px solid rgba(255,255,255,0.02);
+    }
+
+    footer.site-footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 400;
+    }
+
+    /* responsive */
+    @media (max-width:980px){
+      .wrap{ margin:100px 18px 30px; flex-direction:column; align-items:stretch }
+      .hero{ order:-1 }
+    }
+
+    @keyframes barGrow { from{ transform:scaleY(0); opacity:0 } to{ transform:scaleY(1); opacity:1 } }
+    @keyframes fadeInLeft{ from{opacity:0; transform:translateX(-20px)} to{opacity:1; transform:none}}
+    @keyframes fadeInRight{ from{opacity:0; transform:translateX(20px)} to{opacity:1; transform:none}}
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar" role="banner">
+    <div class="brand">SmartAppraise AI by <span class="accent">SY-II</span></div>
+    <nav class="nav-links" role="navigation" aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="analysis.html">Run Analysis</a>
+      <a href="dashboard.html">View Dashboard</a>      
+      <a href="guide.html">User Guide</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html">Logout</a>
+    </nav>
+  </header>
+
+  <!-- MAIN -->
+  <main class="wrap" role="main">
+
+    <!-- LEFT: Intro / CTA -->
+    <section class="intro" aria-labelledby="hero-title">
+      <div class="eyebrow">Enterprise HR • ML-driven</div>
+      <h1 id="hero-title">Upload. Predict. Improve Employee Performance.</h1>
+      <p class="lead">Turn raw HR data into actionable insights. Our model analyses workload, attendance, training and satisfaction to produce reliable performance predictions — helping HR make faster, fairer decisions.</p>
+
+      <div class="cta-row">
+        <button class="btn-primary" onclick="location.href='analysis.html'">Start Analysis</button>
+        <button class="btn-ghost" onclick="location.href='guide.html'">How it works</button>
+      </div>
+
+      <div class="quick-features">
+        <div class="feature"><div class="dot"></div><div><strong>Batch CSV</strong><br><small>Upload many employees</small></div></div>
+        <div class="feature"><div class="dot"></div><div><strong>Feature engineering</strong><br><small>Auto computes attendance & pay/hour</small></div></div>
+        <div class="feature"><div class="dot"></div><div><strong>Export results</strong><br><small>Download labeled CSV</small></div></div>
+        <div class="feature"><div class="dot"></div><div><strong>Privacy</strong><br><small>Local execution option</small></div></div>
+      </div>
+
+      <div class="features-strip">
+        <div class="pill">HR Analytics</div>
+        <div class="pill">Employee Performance Evaluation</div>
+        <div class="pill">Machine Learning</div>
+        <div class="pill">Business Automation</div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Visual / chart -->
+    <aside class="hero">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+        <div>
+          <div style="color:var(--muted); font-weight:600">Model Preview</div>
+          <div style="font-size:20px; font-weight:700; color:var(--accent)">Realtime Batch Predictions</div>
+        </div>
+        <div style="text-align:right; color:var(--muted); font-weight:600">Developed By SY-II</div>
+      </div>
+
+      <div class="chart-wrap" role="img" aria-label="Performance distribution bars">
+        <div class="chart-bar chart-bar--bg" style="position:absolute; left:0; right:0; top:0; bottom:0; opacity:.03; border-radius:14px"></div>
+
+        <div class="chart-bar b1"></div>
+        <div class="chart-bar b2"></div>
+        <div class="chart-bar b3"></div>
+        <div class="chart-bar b4"></div>
+
+        <svg class="sparkline" viewBox="0 0 260 80">
+          <path d="M0,60 Q60,10 120,50 Q180,85 260,40"
+                stroke="rgba(255,214,0,0.95)" stroke-linecap="round" fill="none"/>
+        </svg>
+      </div>
+
+      <div style="display:flex; gap:14px; margin-top:12px; align-items:center; justify-content:space-between;">
+        <div style="color:var(--muted)"><strong>Processed and Predicted</strong><br><small>— 100,000+ data</small></div>
+        <button class="btn-primary" onclick="location.href='analysis.html'">Upload CSV</button>
+      </div>
+    </aside>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div>
+      © 2025 SY-II • SmartAppraise AI | Built by Yaw Chin Hen, Tam Sze Yin, Yang Ka Weng.<br>
+      Need help? <a href="contact.html">Contact us</a> • 
+      <a href="guide.html">User Guide</a>
+    </div>
+  </footer>
+
+  <script>
+    window.addEventListener('load', ()=> {
+      document.querySelectorAll('.chart-bar').forEach(b => b.style.opacity = '1');
+    });
+  </script>
+
+</body>
+</html>

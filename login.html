@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<title>Login — SmartAppraise AI — SY-II</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+--bg-1:#0d1a2d;
+--bg-2:#122139;
+--card:#192841;
+--muted:#b4bcd7;
+--accent:#ffd600;
+--blue:#4ea1fc;
+}
+
+*{box-sizing:border-box; margin:0; padding:0}
+body, html{
+  height: 100%;  /* Ensure the body and html take up full viewport height */
+  font-family:'Roboto',sans-serif;
+  background:linear-gradient(135deg,var(--bg-1),var(--bg-2));
+  color:#eef2f8;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Page container should take at least full height */
+.page-container{
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* NAVBAR (same as other pages) */
+.navbar{
+  position:fixed; top:0; left:0; right:0;
+  height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 36px;
+  background:rgba(23,38,68,0.75);
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  z-index:1000;
+}
+.brand{
+  font-family:'Montserrat'; font-weight:700;
+  color:#fff; font-size:1.15rem;
+}
+.brand .accent{ color:var(--accent) }
+.nav-links{ display:flex; gap:20px; }
+.nav-links a{
+  color:var(--accent); text-decoration:none;
+  font-weight:600; padding:6px 10px;
+  border-radius:8px; transition:.18s;
+}
+.nav-links a:hover{
+  background:rgba(255,214,0,0.08);
+  color:#fff; transform:translateY(-2px);
+}
+
+/* LOGIN CARD */
+.login-container{
+  margin:140px auto 40px;
+  max-width:420px;
+  padding:24px;
+  flex: 1; /* Make sure this takes up available space */
+}
+.login-card{
+  background:var(--card);
+  padding:32px 28px;
+  border-radius:18px;
+  box-shadow:0 10px 26px rgba(0,0,0,0.45);
+  border:1px solid rgba(255,255,255,0.04);
+}
+.login-card h2{
+  font-family:'Montserrat';
+  color:var(--accent);
+  text-align:center;
+  margin-bottom:14px;
+}
+.login-card p{
+  text-align:center;
+  color:var(--muted);
+  margin-bottom:22px;
+  font-size:0.95rem;
+}
+label{
+  display:block;
+  margin-bottom:6px;
+  color:#e6e8ef;
+  font-weight:500;
+}
+input{
+  width:100%;
+  padding:11px 14px;
+  border:none;
+  border-radius:10px;
+  margin-bottom:14px;
+  background:#0f1c31;
+  color:#fff;
+  font-size:1rem;
+}
+input:focus{
+  outline:2px solid var(--accent);
+}
+.login-btn{
+  width:100%;
+  background:var(--accent);
+  color:#122139;
+  border:none;
+  padding:12px;
+  font-weight:700;
+  font-size:1.05rem;
+  border-radius:10px;
+  cursor:pointer;
+  margin-top:8px;
+  transition:.18s;
+}
+.login-btn:hover{
+  background:#ffea72;
+}
+
+/* ERROR MESSAGE */
+.error{
+  color:#ff6b6b;
+  text-align:center;
+  margin-top:10px;
+  display:none;
+}
+
+/* FOOTER */
+footer{
+  text-align:center;
+  padding:18px;
+  color:#9fb0d4;
+  background:rgba(255,255,255,0.02);
+  border-top:1px solid rgba(255,255,255,0.03);
+  margin-top: auto;  /* Ensures the footer stays at the bottom */
+}
+</style>
+</head>
+
+<body>
+
+<header class="navbar">
+<div class="brand">SmartAppraise AI by <span class="accent">SY-II</span></div>
+<nav class="nav-links">
+<a href="login.html">Login</a>
+</nav>
+</header>
+
+<!-- Page container wrapping the main content and footer -->
+<div class="page-container">
+  <div class="login-container">
+    <div class="login-card">
+      <h2>Login</h2>
+      <p>Enter your credentials to continue</p>
+
+      <label>Username</label>
+      <input type="text" id="username" placeholder="Enter username">
+
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter password">
+
+      <button class="login-btn" onclick="login()">Login</button>
+
+      <div class="error" id="errorMsg">Invalid username or password.</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div>
+      © 2025 SY-II • SmartAppraise AI | Built by Yaw Chin Hen, Tam Sze Yin, Yang Ka Weng.<br>
+      Need help? <a href="contact.html" style="color:var(--accent); text-decoration:none">Contact us</a> • 
+      <a href="guide.html" style="color:var(--accent); text-decoration:none">User Guide</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+function login() {
+    const user = document.getElementById("username").value.trim();
+    const pass = document.getElementById("password").value.trim();
+    const error = document.getElementById("errorMsg");
+
+    // FIXED credentials (the ones you must use)
+    const validUser = "admin";
+    const validPass = "12345";
+
+    if (user === validUser && pass === validPass) {
+        window.location.href = "index.html";  // Redirect to homepage
+    } else {
+        error.style.display = "block";
+    }
+}
+</script>
+
+</body>
+</html>
