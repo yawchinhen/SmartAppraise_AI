@@ -1,4 +1,4 @@
-# SmartAppraise AI  
+# 🧑‍💼 SmartAppraise AI  
 Predictive Employee Performance Appraisal using SMART KPI & Non-Linear Machine Learning
 
 
